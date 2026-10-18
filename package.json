@@ -1,0 +1,23 @@
+{
+  "name": "campus-event-management-system",
+  "version": "1.0.0",
+  "description": "Campus Event Management System built on Neo4j Graph Database, Node.js Express, and React",
+  "scripts": {
+    "setup:backend": "npm install --prefix backend",
+    "setup:frontend": "npm install --prefix frontend",
+    "setup": "npm run setup:backend && npm run setup:frontend",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "seed": "npm run seed --prefix backend"
+  },
+  "keywords": [
+    "neo4j",
+    "graph-database",
+    "cypher",
+    "campus-events",
+    "react",
+    "express"
+  ],
+  "author": "",
+  "license": "ISC"
+}
