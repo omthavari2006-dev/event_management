@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Calendar, Award, CheckCircle, Shield, Users, Bell, 
-  Sparkles, LogOut, Network, Search, Ticket, ChevronDown 
+  Sparkles, LogOut, Network, Search, Ticket, ChevronDown, Database 
 } from 'lucide-react';
 
 export default function Navbar({ 
@@ -123,6 +123,14 @@ export default function Navbar({
               <Shield size={16} /> Admin
             </button>
           )}
+
+          <button 
+            className={`btn ${currentTab === 'er-diagram' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setCurrentTab('er-diagram')}
+            style={{ padding: '8px 14px', fontSize: '0.88rem', borderColor: 'rgba(16, 185, 129, 0.4)', color: currentTab === 'er-diagram' ? '#fff' : '#34d399' }}
+          >
+            <Database size={16} /> ER Schema
+          </button>
 
           <button 
             className={`btn ${currentTab === 'viva' ? 'btn-primary' : 'btn-secondary'}`}

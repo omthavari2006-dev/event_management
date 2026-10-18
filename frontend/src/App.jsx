@@ -7,6 +7,7 @@ import VerifyPage from './pages/VerifyPage';
 import OrganizerPage from './pages/OrganizerPage';
 import AdminPage from './pages/AdminPage';
 import GraphVivaExplorer from './pages/GraphVivaExplorer';
+import ERDiagramPage from './pages/ERDiagramPage';
 
 import EventDetailModal from './components/EventDetailModal';
 import TicketModal from './components/TicketModal';
@@ -151,6 +152,10 @@ export default function App() {
           <GraphVivaExplorer 
             user={user} 
           />
+        )}
+
+        {currentTab === 'er-diagram' && (
+          <ERDiagramPage />
         )}
       </main>
 
