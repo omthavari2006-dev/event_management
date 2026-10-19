@@ -30,9 +30,15 @@ export default function OrganizerPage({ user, onRefresh }) {
   const [eventDesc, setEventDesc] = useState('');
   const [eventRequirements, setEventRequirements] = useState('Participants should bring a laptop with Node.js and Git installed. Open to all engineering students. College ID required at entry.');
   const [eventVenue, setEventVenue] = useState('CS Computer Lab 3');
-  const [startDateTime, setStartDateTime] = useState('2026-11-20T14:00');
-  const [endDateTime, setEndDateTime] = useState('2026-11-20T18:00');
-  const [regDeadline, setRegDeadline] = useState('2026-11-19T23:59');
+  const getDefaultDateStr = (daysAhead, hours) => {
+    const d = new Date(Date.now() + daysAhead * 24 * 60 * 60 * 1000);
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(hours)}:00`;
+  };
+
+  const [startDateTime, setStartDateTime] = useState(() => getDefaultDateStr(7, 14));
+  const [endDateTime, setEndDateTime] = useState(() => getDefaultDateStr(7, 18));
+  const [regDeadline, setRegDeadline] = useState(() => getDefaultDateStr(6, 23));
   const [maxParticipants, setMaxParticipants] = useState('40');
   const [maxTeamSize, setMaxTeamSize] = useState('0');
   const [venueClashWarning, setVenueClashWarning] = useState(null);
@@ -154,29 +160,30 @@ export default function OrganizerPage({ user, onRefresh }) {
     e.preventDefault();
     try {
       setLoading(true);
+      const chosenClubId = createClubId || selectedClubId || (clubs[0] ? clubs[0].clubId : 'club-001');
       await api.createEvent({
-        clubId: createClubId || selectedClubId,
+        clubId: chosenClubId,
         name: eventName,
         type: eventType,
-        description: eventDesc,
+        description: eventDesc || 'Campus student event.',
         requirements: eventRequirements,
         venue: eventVenue,
         startDateTime: new Date(startDateTime).toISOString(),
         endDateTime: new Date(endDateTime).toISOString(),
-        registrationDeadline: new Date(regDeadline).toISOString(),
-        maxParticipants: parseInt(maxParticipants),
-        maxTeamSize: parseInt(maxTeamSize)
+        registrationDeadline: new Date(regDeadline || startDateTime).toISOString(),
+        maxParticipants: parseInt(maxParticipants) || 50,
+        maxTeamSize: parseInt(maxTeamSize) || 0
       });
       setShowCreateModal(false);
       setStatusMessage({ 
         type: 'success', 
-        text: `✨ Event "${eventName}" issued successfully! It is now Pending Admin Approval. Once approved by the Dean, students can discover and register.` 
+        text: `✨ Event "${eventName}" created successfully in Neo4j database! Status is 'Pending' for Admin review. Once the Dean/Admin approves it, it will automatically appear in the student Discover catalog.` 
       });
       // reload events
-      await loadClubEvents(selectedClubId);
+      await loadClubEvents(chosenClubId);
       if (onRefresh) onRefresh();
     } catch (err) {
-      alert(err.message);
+      alert(err.message || 'Could not create event.');
     } finally {
       setLoading(false);
     }
@@ -354,7 +361,7 @@ export default function OrganizerPage({ user, onRefresh }) {
       {statusMessage && (
         <div style={{
           padding: '14px 20px',
-          borderRadius: 12,
+          borderRadius: 14,
           background: 'rgba(16, 185, 129, 0.1)',
           border: '1.5px solid rgba(16, 185, 129, 0.3)',
           color: '#065f46',
@@ -371,7 +378,7 @@ export default function OrganizerPage({ user, onRefresh }) {
           </div>
           <button 
             onClick={() => setStatusMessage(null)}
-            style={{ background: 'transparent', color: '#065f46', cursor: 'pointer', border: 'none' }}
+            style={{ background: 'transparent', color: '#065f46', cursor: 'pointer', border: 'none', padding: 4 }}
           >
             <X size={16} />
           </button>

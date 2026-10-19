@@ -33,42 +33,56 @@ export default function AdminPage({ user, onRefresh }) {
   const [actionLoading, setActionLoading] = useState(false);
   const [message, setMessage] = useState(null);
 
+  const isAdmin = user && user.role === 'Admin';
+
   const loadData = async () => {
     try {
       setLoading(true);
-      const [clubsRes, eventsRes, analyticsRes] = await Promise.all([
-        api.getClubs('Pending'),
-        api.getEvents({ status: 'Pending' }),
-        api.getAdminAnalytics()
-      ]);
-      setPendingClubs(clubsRes.clubs || []);
 
-      // Check venue clash for each pending event dynamically
-      const rawEvents = eventsRes.events || [];
-      const eventsWithClash = await Promise.all(
-        rawEvents.map(async (evt) => {
-          try {
-            const clashRes = await api.checkVenueClash(
-              evt.venue,
-              evt.startDateTime,
-              evt.endDateTime,
-              evt.eventId
-            );
-            return {
-              ...evt,
-              hasClash: clashRes.hasClash,
-              clashes: clashRes.clashes || []
-            };
-          } catch {
-            return { ...evt, hasClash: false, clashes: [] };
-          }
-        })
-      );
+      // 1. Fetch pending clubs independently
+      try {
+        const clubsRes = await api.getClubs('Pending');
+        setPendingClubs(clubsRes.clubs || []);
+      } catch (err) {
+        console.warn('Could not fetch pending clubs:', err);
+      }
 
-      setPendingEvents(eventsWithClash);
-      setAnalytics(analyticsRes.analytics || null);
-    } catch (err) {
-      console.error(err);
+      // 2. Fetch pending events independently
+      try {
+        const eventsRes = await api.getEvents({ status: 'Pending' });
+        const rawEvents = eventsRes.events || [];
+        const eventsWithClash = await Promise.all(
+          rawEvents.map(async (evt) => {
+            try {
+              const clashRes = await api.checkVenueClash(
+                evt.venue,
+                evt.startDateTime,
+                evt.endDateTime,
+                evt.eventId
+              );
+              return {
+                ...evt,
+                hasClash: clashRes.hasClash,
+                clashes: clashRes.clashes || []
+              };
+            } catch {
+              return { ...evt, hasClash: false, clashes: [] };
+            }
+          })
+        );
+        setPendingEvents(eventsWithClash);
+      } catch (err) {
+        console.warn('Could not fetch pending events:', err);
+      }
+
+      // 3. Fetch admin analytics independently (only succeeds if Admin token)
+      try {
+        const analyticsRes = await api.getAdminAnalytics();
+        setAnalytics(analyticsRes.analytics || null);
+      } catch (err) {
+        console.info('Admin analytics unavailable (non-admin persona or guest):', err.message);
+        setAnalytics(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -76,13 +90,13 @@ export default function AdminPage({ user, onRefresh }) {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [user]);
 
   const handleApproveClub = async (clubId) => {
     try {
       setActionLoading(true);
       await api.approveClub(clubId);
-      setMessage('Club approved successfully!');
+      setMessage('Club charter approved successfully!');
       await loadData();
       if (onRefresh) onRefresh();
     } catch (err) {
@@ -163,6 +177,20 @@ export default function AdminPage({ user, onRefresh }) {
     }
   };
 
+  if (!user || user.role !== 'Admin') {
+    return (
+      <div style={{ maxWidth: 800, margin: '60px auto', padding: '0 24px', textAlign: 'center' }}>
+        <div className="glass-panel" style={{ padding: 48, borderRadius: 20 }}>
+          <ShieldAlert size={48} color="#ef4444" style={{ marginBottom: 16 }} />
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0f172a', marginBottom: 8 }}>Administrator Access Required</h2>
+          <p style={{ color: '#64748b', fontSize: '0.95rem' }}>
+            Only Campus Administrators can access this command center to review, approve, or reject event charters. Please log in with Administrator credentials.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ maxWidth: 1300, margin: '0 auto', padding: '32px 24px' }}>
       {/* Admin Title */}
@@ -179,6 +207,8 @@ export default function AdminPage({ user, onRefresh }) {
           <RefreshCw size={16} /> Refresh Metrics
         </button>
       </div>
+
+
 
       {message && (
         <div style={{

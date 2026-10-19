@@ -18,10 +18,10 @@ export default function Navbar({
   const unreadCount = notifications.filter(n => n.status === 'Unread').length;
 
   const demoAccounts = [
-    { label: 'Alex Rivera (President, CodeCraft)', email: 'alex@campus.edu', role: 'Student' },
-    { label: 'Dr. Sharma (Admin / Dean)', email: 'admin@campus.edu', role: 'Admin' },
-    { label: 'Marcus Chen (President, Robotics)', email: 'marcus@campus.edu', role: 'Student' },
-    { label: 'Sarah Jenkins (General Student)', email: 'sarah@campus.edu', role: 'Student' }
+    { label: 'Alex Rivera (President, CodeCraft)', email: 'alex@gmail.com', role: 'Student' },
+    { label: 'Dr. Sharma (Admin / Dean)', email: 'admin@gmail.com', role: 'Admin' },
+    { label: 'Marcus Chen (President, Robotics)', email: 'marcus@gmail.com', role: 'Student' },
+    { label: 'Sarah Jenkins (General Student)', email: 'sarah@gmail.com', role: 'Student' }
   ];
 
   return (
@@ -106,7 +106,7 @@ export default function Navbar({
             <CheckCircle size={16} /> Verify
           </button>
 
-          {user && (user.role === 'Admin' || (user.clubMemberships && user.clubMemberships.some(m => m.role === 'President' || m.role === 'Organizer'))) && (
+          {user && (
             <button 
               className={`btn ${currentTab === 'organizer' ? 'btn-primary' : 'btn-secondary'}`}
               onClick={() => setCurrentTab('organizer')}
@@ -120,9 +120,15 @@ export default function Navbar({
             <button 
               className={`btn ${currentTab === 'admin' ? 'btn-primary' : 'btn-secondary'}`}
               onClick={() => setCurrentTab('admin')}
-              style={{ padding: '8px 14px', fontSize: '0.88rem', background: currentTab === 'admin' ? 'linear-gradient(135deg, #f59e0b, #ef4444)' : undefined }}
+              style={{ 
+                padding: '8px 14px', 
+                fontSize: '0.88rem', 
+                background: currentTab === 'admin' ? 'linear-gradient(135deg, #f59e0b, #ef4444)' : undefined,
+                color: currentTab === 'admin' ? '#fff' : '#b45309'
+              }}
+              title="Admin Command Center (Verify & Approve Events)"
             >
-              <Shield size={16} /> Admin
+              <Shield size={16} color={currentTab === 'admin' ? '#fff' : '#d97706'} /> Admin
             </button>
           )}
 

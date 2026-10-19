@@ -22,19 +22,27 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    const cleanEmail = email.trim().toLowerCase();
+    if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/i.test(cleanEmail)) {
+      setError('Please enter a valid @gmail.com email address (e.g., student@gmail.com).');
+      setLoading(false);
+      return;
+    }
+
     try {
       let res;
       if (isRegister) {
         res = await api.register({
           name,
-          email,
+          email: cleanEmail,
           phone,
           department,
           year: parseInt(year),
           password
         });
       } else {
-        res = await api.login(email, password);
+        res = await api.login(cleanEmail, password);
       }
 
       localStorage.setItem('campus_token', res.token);
@@ -148,10 +156,12 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
           )}
 
           <div>
-            <label style={{ fontSize: '0.82rem', color: '#475569', display: 'block', marginBottom: 5, fontWeight: 600 }}>Campus Email</label>
+            <label style={{ fontSize: '0.82rem', color: '#475569', display: 'block', marginBottom: 5, fontWeight: 600 }}>Email Address (@gmail.com)</label>
             <input 
               type="email" 
-              placeholder="e.g. alex@campus.edu" 
+              placeholder="e.g. yourname@gmail.com" 
+              pattern="[a-zA-Z0-9._%+-]+@gmail\.com"
+              title="Must be a valid @gmail.com address"
               value={email} 
               onChange={(e) => setEmail(e.target.value)} 
               style={{ width: '100%' }}
@@ -199,14 +209,14 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
             <button 
               className="btn btn-secondary" 
               style={{ fontSize: '0.78rem', padding: '8px' }}
-              onClick={() => handleQuickSelect('admin@campus.edu')}
+              onClick={() => handleQuickSelect('admin@gmail.com')}
             >
               👑 Admin (Dr. Sharma)
             </button>
             <button 
               className="btn btn-secondary" 
               style={{ fontSize: '0.78rem', padding: '8px' }}
-              onClick={() => handleQuickSelect('alex@campus.edu')}
+              onClick={() => handleQuickSelect('alex@gmail.com')}
             >
               🎓 Student (Alex Rivera)
             </button>

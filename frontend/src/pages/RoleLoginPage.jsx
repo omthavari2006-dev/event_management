@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   GraduationCap, Users, Shield, ArrowRight, Lock, Mail, 
   Sparkles, CheckCircle, Compass, User, BookOpen, Phone, KeyRound, Award
@@ -10,28 +10,46 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
   const [isRegistering, setIsRegistering] = useState(false);
 
   // Form fields
-  const [email, setEmail] = useState('alex@campus.edu');
+  const [email, setEmail] = useState('alex@gmail.com');
   const [password, setPassword] = useState('password123');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [department, setDepartment] = useState('Computer Science');
   const [year, setYear] = useState('3');
 
+  // Organizer & Admin specific fields
+  const [clubs, setClubs] = useState([]);
+  const [selectedClub, setSelectedClub] = useState('');
+  const [newClubName, setNewClubName] = useState('');
+  const [adminTitle, setAdminTitle] = useState('Dean of Student Affairs');
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  useEffect(() => {
+    api.getClubs('Approved')
+      .then(res => {
+        const clubList = res.clubs || [];
+        setClubs(clubList);
+        if (clubList.length > 0) {
+          setSelectedClub(clubList[0].clubId);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Quick preset accounts per role
   const rolePresets = {
     Student: [
-      { name: 'Alex Rivera', email: 'alex@campus.edu', dept: 'Computer Science (Year 3)', badge: '120 Points' },
-      { name: 'Sarah Jenkins', email: 'sarah@campus.edu', dept: 'Information Tech (Year 2)', badge: '60 Points' }
+      { name: 'Alex Rivera', email: 'alex@gmail.com', dept: 'Computer Science (Year 3)', badge: '120 Points' },
+      { name: 'Sarah Jenkins', email: 'sarah@gmail.com', dept: 'Information Tech (Year 2)', badge: '60 Points' }
     ],
     Organizer: [
-      { name: 'Alex Rivera (President)', email: 'alex@campus.edu', club: 'CodeCraft Developers Club', badge: 'Tech & Hackathons' },
-      { name: 'Marcus Chen (President)', email: 'marcus@campus.edu', club: 'Robotics & Automation Society', badge: 'Drones & Hardware' }
+      { name: 'Alex Rivera (President)', email: 'alex@gmail.com', club: 'CodeCraft Developers Club', badge: 'Tech & Hackathons' },
+      { name: 'Marcus Chen (President)', email: 'marcus@gmail.com', club: 'Robotics & Automation Society', badge: 'Drones & Hardware' }
     ],
     Admin: [
-      { name: 'Dr. Sharma (Dean)', email: 'admin@campus.edu', dept: 'Dean of Student Affairs', badge: 'Full Campus Authority' }
+      { name: 'Dr. Sharma (Dean)', email: 'admin@gmail.com', dept: 'Dean of Student Affairs', badge: 'Full Campus Authority' }
     ]
   };
 
@@ -40,13 +58,13 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
     setIsRegistering(false);
     setError(null);
     if (role === 'Admin') {
-      setEmail('admin@campus.edu');
+      setEmail('admin@gmail.com');
       setPassword('password123');
     } else if (role === 'Organizer') {
-      setEmail('alex@campus.edu');
+      setEmail('alex@gmail.com');
       setPassword('password123');
     } else {
-      setEmail('alex@campus.edu');
+      setEmail('alex@gmail.com');
       setPassword('password123');
     }
   };
@@ -76,20 +94,43 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
     setLoading(true);
     setError(null);
 
+    const cleanEmail = email.trim().toLowerCase();
+    if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/i.test(cleanEmail)) {
+      setError('Email format must be a valid @gmail.com address (e.g., yourname@gmail.com).');
+      setLoading(false);
+      return;
+    }
+
     try {
       if (isRegistering) {
-        const res = await api.register({
+        let payload = {
           name,
-          email,
-          phone,
-          department,
-          year: parseInt(year),
-          password
-        });
+          email: cleanEmail,
+          password,
+          role: selectedRole
+        };
+
+        if (selectedRole === 'Admin') {
+          payload.title = adminTitle;
+        } else if (selectedRole === 'Organizer') {
+          payload.department = department;
+          payload.year = 3;
+          if (selectedClub === 'NEW') {
+            payload.clubName = newClubName || 'Student Club';
+          } else {
+            payload.clubId = selectedClub;
+          }
+        } else {
+          payload.phone = phone;
+          payload.department = department;
+          payload.year = parseInt(year) || 1;
+        }
+
+        const res = await api.register(payload);
         localStorage.setItem('campus_token', res.token);
-        onLoginSuccess(res.user, 'Student');
+        onLoginSuccess(res.user, selectedRole);
       } else {
-        const res = await api.login(email, password);
+        const res = await api.login(cleanEmail, password);
         localStorage.setItem('campus_token', res.token);
         onLoginSuccess(res.user, selectedRole);
       }
@@ -451,6 +492,7 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
 
         {/* Input Form */}
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Student Registration Fields */}
           {isRegistering && selectedRole === 'Student' && (
             <>
               <div>
@@ -501,12 +543,96 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
             </>
           )}
 
+          {/* Organizer Registration Fields */}
+          {isRegistering && selectedRole === 'Organizer' && (
+            <>
+              <div>
+                <label style={{ fontSize: '0.84rem', color: '#334155', fontWeight: 600, display: 'block', marginBottom: 6 }}>Organizer Full Name</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Om Thavari" 
+                  value={name} 
+                  onChange={(e) => setName(e.target.value)}
+                  style={{ width: '100%' }}
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ fontSize: '0.84rem', color: '#334155', fontWeight: 600, display: 'block', marginBottom: 6 }}>Department</label>
+                  <select value={department} onChange={(e) => setDepartment(e.target.value)} style={{ width: '100%' }}>
+                    <option value="Computer Science">Computer Science</option>
+                    <option value="Electronics & Comm">Electronics & Comm</option>
+                    <option value="Information Tech">Information Tech</option>
+                    <option value="Mechanical Engg">Mechanical Engg</option>
+                    <option value="Design & Media">Design & Media</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.84rem', color: '#334155', fontWeight: 600, display: 'block', marginBottom: 6 }}>Represented Club</label>
+                  <select value={selectedClub} onChange={(e) => setSelectedClub(e.target.value)} style={{ width: '100%' }}>
+                    {clubs.map(c => (
+                      <option key={c.clubId} value={c.clubId}>{c.name}</option>
+                    ))}
+                    <option value="NEW">+ Create New Club...</option>
+                  </select>
+                </div>
+              </div>
+
+              {selectedClub === 'NEW' && (
+                <div>
+                  <label style={{ fontSize: '0.84rem', color: '#334155', fontWeight: 600, display: 'block', marginBottom: 6 }}>New Club Name</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. AI & Machine Learning Society" 
+                    value={newClubName} 
+                    onChange={(e) => setNewClubName(e.target.value)}
+                    style={{ width: '100%' }}
+                    required
+                  />
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Admin Registration Fields */}
+          {isRegistering && selectedRole === 'Admin' && (
+            <>
+              <div>
+                <label style={{ fontSize: '0.84rem', color: '#334155', fontWeight: 600, display: 'block', marginBottom: 6 }}>Administrator Full Name</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Dr. R. K. Sharma" 
+                  value={name} 
+                  onChange={(e) => setName(e.target.value)}
+                  style={{ width: '100%' }}
+                  required
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.84rem', color: '#334155', fontWeight: 600, display: 'block', marginBottom: 6 }}>Official Title / Authority</label>
+                <select value={adminTitle} onChange={(e) => setAdminTitle(e.target.value)} style={{ width: '100%' }}>
+                  <option value="Dean of Student Affairs">Dean of Student Affairs</option>
+                  <option value="Associate Dean">Associate Dean</option>
+                  <option value="Head of Department">Head of Department (HOD)</option>
+                  <option value="Faculty Council Chairperson">Faculty Council Chairperson</option>
+                  <option value="Campus Administrator">Campus Administrator</option>
+                </select>
+              </div>
+            </>
+          )}
+
           <div>
-            <label style={{ fontSize: '0.84rem', color: '#334155', fontWeight: 600, display: 'block', marginBottom: 6 }}>Campus Email Address</label>
+            <label style={{ fontSize: '0.84rem', color: '#334155', fontWeight: 600, display: 'block', marginBottom: 6 }}>Email Address (@gmail.com)</label>
             <input 
               type="email" 
               value={email} 
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="e.g. yourname@gmail.com"
+              pattern="[a-zA-Z0-9._%+-]+@gmail\.com"
+              title="Must be a valid @gmail.com address"
               style={{ width: '100%' }}
               required
             />
@@ -541,23 +667,31 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
                 : undefined
             }}
           >
-            {loading ? 'Authenticating...' : isRegistering ? 'Complete Registration' : `Sign In as ${selectedRole}`}
+            {loading ? 'Authenticating...' : isRegistering ? `Complete ${selectedRole} Registration` : `Sign In as ${selectedRole}`}
           </button>
         </form>
 
-        {/* Toggle Register for Student */}
-        {selectedRole === 'Student' && (
-          <div style={{ textAlign: 'center', marginTop: 18, fontSize: '0.88rem', color: '#64748b' }}>
-            {isRegistering ? 'Already have a registered account?' : 'New student on campus?'}{' '}
-            <button 
-              type="button"
-              onClick={() => setIsRegistering(!isRegistering)}
-              style={{ background: 'transparent', color: '#4f46e5', fontWeight: 700, cursor: 'pointer', border: 'none' }}
-            >
-              {isRegistering ? 'Sign In' : 'Register Here'}
-            </button>
-          </div>
-        )}
+        {/* Toggle Register for Any Role */}
+        <div style={{ textAlign: 'center', marginTop: 18, fontSize: '0.88rem', color: '#64748b' }}>
+          {isRegistering ? 'Already have an account?' : `New ${selectedRole.toLowerCase()} on campus?`}{' '}
+          <button 
+            type="button"
+            onClick={() => {
+              setIsRegistering(!isRegistering);
+              setError(null);
+              if (!isRegistering) {
+                setEmail('');
+                setPassword('');
+              } else {
+                setEmail(selectedRole === 'Admin' ? 'admin@gmail.com' : 'alex@gmail.com');
+                setPassword('password123');
+              }
+            }}
+            style={{ background: 'transparent', color: '#4f46e5', fontWeight: 700, cursor: 'pointer', border: 'none' }}
+          >
+            {isRegistering ? 'Sign In' : `Register as ${selectedRole}`}
+          </button>
+        </div>
 
         {/* Public / Guest Access */}
         <div style={{

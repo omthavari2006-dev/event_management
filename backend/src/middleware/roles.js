@@ -41,27 +41,26 @@ function requireClubOrganizer(req, res, next) {
     m => m.clubId === targetClubId && (m.role === 'President' || m.role === 'Organizer')
   );
 
-  if (targetClubId && !isPresident && !isOrganizer) {
-    return res.status(403).json({
-      success: false,
-      message: 'Forbidden. You must be an Organizer or President of this club.'
-    });
+  if (targetClubId && (isPresident || isOrganizer)) {
+    return next();
   }
 
-  // If no targetClubId specified in param, check if they have at least one organizer/president role
-  if (!targetClubId) {
-    const hasAnyOrgRole = (req.user.presidentClubs && req.user.presidentClubs.length > 0) ||
-      (req.user.clubMemberships && req.user.clubMemberships.some(m => m.role === 'President' || m.role === 'Organizer'));
+  const hasAnyOrgRole = (req.user.presidentClubs && req.user.presidentClubs.length > 0) ||
+    (req.user.clubMemberships && req.user.clubMemberships.some(m => m.role === 'President' || m.role === 'Organizer'));
 
-    if (!hasAnyOrgRole) {
-      return res.status(403).json({
-        success: false,
-        message: 'Forbidden. You do not hold an organizer role in any club.'
-      });
-    }
+  if (hasAnyOrgRole) {
+    return next();
   }
 
-  next();
+  // Students can propose events which always start as 'Pending' for Admin review
+  if (req.user.role === 'Student') {
+    return next();
+  }
+
+  return res.status(403).json({
+    success: false,
+    message: 'Forbidden. Organizer privileges required.'
+  });
 }
 
 module.exports = {

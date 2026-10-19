@@ -153,10 +153,10 @@ Frontend client will open at: **`http://localhost:5173`**
 
 | Persona | Name | Email | Role / Privileges |
 | :--- | :--- | :--- | :--- |
-| **Admin** | Dr. Sharma | `admin@campus.edu` | Approve clubs & events, system analytics |
-| **Student (Organizer)** | Alex Rivera | `alex@campus.edu` | CodeCraft President, create events, mark attendance |
-| **Student (Organizer)** | Marcus Chen | `marcus@campus.edu` | Robotics President, create events, declare winners |
-| **Student (Member)** | Sarah Jenkins | `sarah@campus.edu` | Browse events, join waitlist, download passes |
+| **Admin** | Dr. Sharma | `admin@gmail.com` | Approve clubs & events, system analytics |
+| **Student (Organizer)** | Alex Rivera | `alex@gmail.com` | CodeCraft President, create events, mark attendance |
+| **Student (Organizer)** | Marcus Chen | `marcus@gmail.com` | Robotics President, create events, declare winners |
+| **Student (Member)** | Sarah Jenkins | `sarah@gmail.com` | Browse events, join waitlist, download passes |
 
 > **Viva Demo Tip**: Use the **"Demo Persona"** dropdown in the top-right navbar to instantly switch between Admin, President, and Student with zero typing!
 

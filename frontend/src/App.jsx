@@ -214,7 +214,7 @@ export default function App() {
           />
         )}
 
-        {currentTab === 'admin' && (
+        {currentTab === 'admin' && user?.role === 'Admin' && (
           <AdminPage 
             user={user} 
             onRefresh={loadUserAndNotifs}

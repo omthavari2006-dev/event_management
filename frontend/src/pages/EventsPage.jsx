@@ -228,15 +228,17 @@ export default function EventsPage({ user, onSelectEvent, onOpenAuth }) {
       ) : events.length === 0 ? (
         <div style={{
           textAlign: 'center',
-          padding: '80px 20px',
-          background: 'rgba(255, 255, 255, 0.75)',
+          padding: '64px 24px',
+          background: 'rgba(255, 255, 255, 0.85)',
           borderRadius: 22,
           border: '1.5px solid rgba(226, 232, 240, 0.9)',
           boxShadow: '0 10px 30px rgba(100, 116, 139, 0.06)'
         }}>
-          <Compass size={48} style={{ margin: '0 auto 16px', color: '#94a3b8' }} />
-          <h3 style={{ fontSize: '1.3rem', marginBottom: 8, color: '#0f172a', fontWeight: 700 }}>No events found</h3>
-          <p style={{ color: '#64748b', fontSize: '0.92rem' }}>Try clearing your filters or search terms.</p>
+          <Calendar size={48} style={{ margin: '0 auto 16px', color: '#6366f1' }} />
+          <h3 style={{ fontSize: '1.35rem', marginBottom: 8, color: '#0f172a', fontWeight: 700 }}>No Approved Events Yet</h3>
+          <p style={{ color: '#64748b', fontSize: '0.94rem', maxWidth: 520, margin: '0 auto 16px', lineHeight: 1.6 }}>
+            All demo events have been removed from the database. When a club organizer proposes an event in the <strong>Studio</strong> and the Dean / Admin approves it, it will appear here for student registrations!
+          </p>
         </div>
       ) : (
         <div style={{

@@ -181,7 +181,9 @@ class EventRepository {
     maxTeamSize
   }) {
     const cypher = `
-      MATCH (c:Club {clubId: $clubId})
+      MATCH (c:Club)
+      WHERE c.clubId = $clubId OR c.name = $clubId
+      WITH c LIMIT 1
       CREATE (e:Event {
         eventId: $eventId,
         name: $name,
@@ -198,23 +200,27 @@ class EventRepository {
         createdTimestamp: toString(datetime())
       })
       CREATE (c)-[:ORGANIZES]->(e)
-      RETURN e
+      RETURN e, c.clubId AS clubId, c.name AS clubName
     `;
     const result = await executeQuery(cypher, {
       eventId,
       clubId,
       name,
-      type,
-      description,
+      type: type || 'Workshop',
+      description: description || '',
       requirements: requirements || '',
       venue,
       startDateTime,
       endDateTime,
-      registrationDeadline,
-      maxParticipants,
-      maxTeamSize
+      registrationDeadline: registrationDeadline || startDateTime,
+      maxParticipants: maxParticipants ? parseInt(maxParticipants) : 50,
+      maxTeamSize: maxTeamSize ? parseInt(maxTeamSize) : 0
     });
-    return recordsToObjects(result.records)[0]?.e;
+    const objects = recordsToObjects(result.records);
+    if (!objects.length) {
+      throw new Error(`Club "${clubId}" was not found. Please choose an active campus club.`);
+    }
+    return objects[0].e;
   }
 
   async approveEvent(eventId, adminId) {
