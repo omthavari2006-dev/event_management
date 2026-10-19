@@ -36,39 +36,40 @@ export default function NotificationDrawer({
           width: '100%',
           maxWidth: 420,
           height: '100vh',
-          background: '#0f172a',
-          borderLeft: '1px solid rgba(255, 255, 255, 0.1)',
+          background: 'rgba(255, 255, 255, 0.96)',
+          backdropFilter: 'blur(24px)',
+          borderLeft: '1.5px solid rgba(226, 232, 240, 0.9)',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '-10px 0 30px rgba(0, 0, 0, 0.5)',
+          boxShadow: '-12px 0 40px rgba(100, 116, 139, 0.16)',
           animation: 'fadeIn 0.2s ease-out'
         }}
       >
         {/* Drawer Header */}
         <div style={{
           padding: '20px 24px',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+          borderBottom: '1.5px solid rgba(226, 232, 240, 0.9)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          background: '#131c31'
+          background: 'linear-gradient(135deg, rgba(238, 242, 255, 0.96) 0%, rgba(240, 249, 255, 0.9) 100%)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Bell size={20} color="#818cf8" />
-            <h3 style={{ fontSize: '1.15rem' }}>Notifications</h3>
+            <Bell size={20} color="#4f46e5" />
+            <h3 style={{ fontSize: '1.18rem', color: '#0f172a', fontWeight: 800 }}>Notifications</h3>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {notifications.some(n => n.status === 'Unread') && (
               <button 
                 onClick={handleMarkAllRead}
-                style={{ background: 'transparent', color: '#818cf8', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 600 }}
+                style={{ background: 'transparent', color: '#4f46e5', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 700, border: 'none' }}
               >
                 Mark all read
               </button>
             )}
             <button 
               onClick={onClose}
-              style={{ background: 'transparent', color: '#94a3b8', display: 'flex', cursor: 'pointer' }}
+              style={{ background: 'transparent', color: '#64748b', display: 'flex', cursor: 'pointer', border: 'none' }}
             >
               <X size={20} />
             </button>
@@ -79,8 +80,8 @@ export default function NotificationDrawer({
         <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
           {notifications.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 20px', color: '#64748b' }}>
-              <Bell size={36} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
-              <div>No notifications yet.</div>
+              <Bell size={36} style={{ margin: '0 auto 12px', color: '#94a3b8' }} />
+              <div style={{ fontSize: '0.92rem' }}>No notifications yet.</div>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -89,31 +90,32 @@ export default function NotificationDrawer({
                   key={n.notificationId}
                   style={{
                     padding: 14,
-                    borderRadius: 10,
-                    background: n.status === 'Unread' ? 'rgba(99, 102, 241, 0.08)' : 'rgba(255, 255, 255, 0.02)',
-                    border: `1px solid ${n.status === 'Unread' ? 'rgba(99, 102, 241, 0.3)' : 'rgba(255, 255, 255, 0.05)'}`,
-                    transition: 'background 0.2s ease',
-                    position: 'relative'
+                    borderRadius: 14,
+                    background: n.status === 'Unread' ? 'rgba(238, 242, 255, 0.92)' : 'rgba(248, 250, 252, 0.85)',
+                    border: `1.5px solid ${n.status === 'Unread' ? 'rgba(199, 210, 254, 0.95)' : 'rgba(226, 232, 240, 0.85)'}`,
+                    transition: 'all 0.15s ease',
+                    position: 'relative',
+                    boxShadow: n.status === 'Unread' ? '0 4px 12px rgba(99, 102, 241, 0.08)' : 'none'
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
-                    <div style={{ fontWeight: 700, fontSize: '0.9rem', color: n.status === 'Unread' ? '#fff' : '#cbd5e1' }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.92rem', color: n.status === 'Unread' ? '#0f172a' : '#334155' }}>
                       {n.title}
                     </div>
                     {n.status === 'Unread' && (
                       <button 
                         onClick={() => handleMarkAsRead(n.notificationId)}
                         title="Mark as read"
-                        style={{ background: 'transparent', color: '#818cf8', cursor: 'pointer', display: 'flex', padding: 2 }}
+                        style={{ background: 'transparent', color: '#4f46e5', cursor: 'pointer', display: 'flex', padding: 2, border: 'none' }}
                       >
-                        <Check size={14} />
+                        <Check size={15} />
                       </button>
                     )}
                   </div>
-                  <div style={{ fontSize: '0.84rem', color: '#94a3b8', marginBottom: 8, lineHeight: 1.4 }}>
+                  <div style={{ fontSize: '0.86rem', color: '#475569', marginBottom: 8, lineHeight: 1.45 }}>
                     {n.message}
                   </div>
-                  <div style={{ fontSize: '0.72rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <div style={{ fontSize: '0.74rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
                     <Clock size={12} /> {new Date(n.createdTimestamp).toLocaleString()}
                   </div>
                 </div>

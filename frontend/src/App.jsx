@@ -142,21 +142,22 @@ export default function App() {
       {/* Guest Mode Indicator Banner */}
       {isGuest && !user && (
         <div style={{
-          background: 'linear-gradient(90deg, rgba(99, 102, 241, 0.2), rgba(14, 165, 233, 0.2))',
-          borderBottom: '1px solid rgba(99, 102, 241, 0.3)',
-          padding: '8px 24px',
+          background: 'linear-gradient(90deg, rgba(99, 102, 241, 0.12), rgba(14, 165, 233, 0.12))',
+          borderBottom: '1px solid rgba(99, 102, 241, 0.25)',
+          padding: '10px 24px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          fontSize: '0.85rem'
+          fontSize: '0.86rem',
+          backdropFilter: 'blur(8px)'
         }}>
-          <span style={{ color: '#cbd5e1' }}>
-            👀 You are currently browsing in <strong>Guest Mode</strong> (Public event catalog & certificate verification).
+          <span style={{ color: '#334155', fontWeight: 500 }}>
+            👀 You are currently browsing in <strong style={{ color: '#0f172a' }}>Guest Mode</strong> (Public event catalog & certificate verification).
           </span>
           <button 
             className="btn btn-primary"
             onClick={() => setIsGuest(false)}
-            style={{ padding: '4px 14px', fontSize: '0.8rem' }}
+            style={{ padding: '6px 16px', fontSize: '0.82rem' }}
           >
             Sign In with Role
           </button>

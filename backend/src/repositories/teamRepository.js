@@ -91,6 +91,7 @@ class TeamRepository {
       OPTIONAL MATCH (m:Student)-[inTeam:IN_TEAM]->(t)
       RETURN t.teamId AS teamId,
              t.name AS teamName,
+             t.createdTimestamp AS createdTimestamp,
              leader.studentId AS leaderId,
              leader.name AS leaderName,
              collect(DISTINCT {
@@ -100,7 +101,7 @@ class TeamRepository {
                joinedTime: inTeam.joinedTime,
                isLeader: (m.studentId = leader.studentId)
              }) AS members
-      ORDER BY t.createdTimestamp ASC
+      ORDER BY createdTimestamp ASC
     `;
     const result = await executeQuery(cypher, { eventId });
     return recordsToObjects(result.records);

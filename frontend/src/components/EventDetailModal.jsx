@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   X, Calendar, MapPin, Users, Clock, AlertTriangle, 
-  CheckCircle, ShieldAlert, Star, MessageSquare, Plus, UserPlus 
+  CheckCircle, ShieldAlert, Star, MessageSquare, Plus, UserPlus, FileText 
 } from 'lucide-react';
 import { api } from '../api/client';
 import confetti from 'canvas-confetti';
@@ -187,8 +187,8 @@ export default function EventDetailModal({
             {/* Modal Header Banner */}
             <div style={{
               padding: '28px 32px',
-              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%)',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+              background: 'linear-gradient(135deg, rgba(238, 242, 255, 0.96) 0%, rgba(240, 249, 255, 0.9) 100%)',
+              borderBottom: '1.5px solid rgba(226, 232, 240, 0.8)',
               position: 'relative'
             }}>
               <button 
@@ -197,14 +197,16 @@ export default function EventDetailModal({
                   position: 'absolute',
                   top: 20,
                   right: 20,
-                  background: 'rgba(255, 255, 255, 0.1)',
+                  background: 'rgba(100, 116, 139, 0.12)',
                   borderRadius: '50%',
-                  width: 32,
-                  height: 32,
+                  width: 34,
+                  height: 34,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#fff'
+                  color: '#0f172a',
+                  border: 'none',
+                  cursor: 'pointer'
                 }}
               >
                 <X size={18} />
@@ -218,8 +220,8 @@ export default function EventDetailModal({
                 <span className="badge badge-purple">{event.clubName}</span>
               </div>
 
-              <h2 style={{ fontSize: '1.75rem', marginBottom: 8, lineHeight: 1.25 }}>{event.name}</h2>
-              <div style={{ fontSize: '0.92rem', color: '#cbd5e1' }}>{event.description}</div>
+              <h2 style={{ fontSize: '1.75rem', marginBottom: 8, lineHeight: 1.25, color: '#0f172a', fontWeight: 800 }}>{event.name}</h2>
+              <div style={{ fontSize: '0.94rem', color: '#475569', lineHeight: 1.5 }}>{event.description}</div>
             </div>
 
             {/* Modal Body */}
@@ -228,16 +230,17 @@ export default function EventDetailModal({
               {message && (
                 <div style={{
                   padding: '12px 16px',
-                  borderRadius: 10,
+                  borderRadius: 12,
                   marginBottom: 16,
-                  background: message.type === 'success' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(59, 130, 246, 0.15)',
-                  border: `1px solid ${message.type === 'success' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(59, 130, 246, 0.3)'}`,
-                  color: '#fff',
+                  background: message.type === 'success' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(59, 130, 246, 0.1)',
+                  border: `1.5px solid ${message.type === 'success' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(59, 130, 246, 0.3)'}`,
+                  color: message.type === 'success' ? '#065f46' : '#1e40af',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 10
+                  gap: 10,
+                  fontWeight: 600
                 }}>
-                  <CheckCircle size={18} color="#34d399" />
+                  <CheckCircle size={18} color="#059669" />
                   <span>{message.text}</span>
                 </div>
               )}
@@ -245,16 +248,17 @@ export default function EventDetailModal({
               {error && (
                 <div style={{
                   padding: '12px 16px',
-                  borderRadius: 10,
+                  borderRadius: 12,
                   marginBottom: 16,
-                  background: 'rgba(239, 68, 68, 0.15)',
-                  border: '1px solid rgba(239, 68, 68, 0.3)',
-                  color: '#fca5a5',
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  border: '1.5px solid rgba(239, 68, 68, 0.3)',
+                  color: '#b91c1c',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 10
+                  gap: 10,
+                  fontWeight: 600
                 }}>
-                  <ShieldAlert size={18} color="#f87171" />
+                  <ShieldAlert size={18} color="#dc2626" />
                   <span>{error}</span>
                 </div>
               )}
@@ -264,84 +268,106 @@ export default function EventDetailModal({
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
                 gap: 16,
-                background: 'rgba(255, 255, 255, 0.03)',
+                background: 'rgba(241, 245, 249, 0.75)',
                 padding: 16,
-                borderRadius: 12,
-                border: '1px solid rgba(255, 255, 255, 0.06)',
+                borderRadius: 14,
+                border: '1.5px solid rgba(226, 232, 240, 0.9)',
                 marginBottom: 24
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <MapPin size={18} color="#818cf8" />
+                  <MapPin size={18} color="#4f46e5" />
                   <div>
-                    <div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase' }}>Venue</div>
-                    <div style={{ fontSize: '0.88rem', fontWeight: 600 }}>{event.venue}</div>
+                    <div style={{ fontSize: '0.74rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Venue</div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0f172a' }}>{event.venue}</div>
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <Calendar size={18} color="#38bdf8" />
+                  <Calendar size={18} color="#0284c7" />
                   <div>
-                    <div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase' }}>Date & Time</div>
-                    <div style={{ fontSize: '0.88rem', fontWeight: 600 }}>
+                    <div style={{ fontSize: '0.74rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Date & Time</div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0f172a' }}>
                       {new Date(event.startDateTime).toLocaleDateString()} at {new Date(event.startDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <Clock size={18} color="#f59e0b" />
+                  <Clock size={18} color="#d97706" />
                   <div>
-                    <div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase' }}>Deadline</div>
-                    <div style={{ fontSize: '0.88rem', fontWeight: 600 }}>
+                    <div style={{ fontSize: '0.74rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Deadline</div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0f172a' }}>
                       {new Date(event.registrationDeadline).toLocaleDateString()}
                     </div>
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <Users size={18} color="#34d399" />
+                  <Users size={18} color="#059669" />
                   <div>
-                    <div style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase' }}>Capacity & Teams</div>
-                    <div style={{ fontSize: '0.88rem', fontWeight: 600 }}>
+                    <div style={{ fontSize: '0.74rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Capacity & Teams</div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0f172a' }}>
                       {event.registeredCount} / {event.maxParticipants} Seats ({event.maxTeamSize > 0 ? `Team of ${event.maxTeamSize}` : 'Solo'})
                     </div>
                   </div>
                 </div>
               </div>
 
+              {/* Requirements & Prerequisites Section */}
+              {event.requirements && (
+                <div style={{
+                  background: 'rgba(99, 102, 241, 0.08)',
+                  border: '1.5px solid rgba(99, 102, 241, 0.25)',
+                  borderRadius: 14,
+                  padding: '16px 20px',
+                  marginBottom: 24
+                }}>
+                  <div style={{ fontSize: '0.86rem', fontWeight: 700, color: '#4f46e5', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                    <FileText size={16} />
+                    <span>Organizer Requirements & Prerequisites:</span>
+                  </div>
+                  <div style={{ fontSize: '0.9rem', color: '#1e293b', whiteSpace: 'pre-wrap', lineHeight: 1.55 }}>
+                    {event.requirements}
+                  </div>
+                </div>
+              )}
+
               {/* Graph Intelligence: Friends Going Banner */}
               {friendsGoing.length > 0 && (
                 <div style={{
-                  background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.15))',
-                  border: '1px solid rgba(99, 102, 241, 0.3)',
-                  padding: '12px 16px',
-                  borderRadius: 12,
+                  background: 'linear-gradient(135deg, rgba(238, 242, 255, 0.95), rgba(250, 232, 255, 0.95))',
+                  border: '1.5px solid rgba(199, 210, 254, 0.85)',
+                  padding: '14px 18px',
+                  borderRadius: 14,
                   marginBottom: 24,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 12
+                  gap: 12,
+                  boxShadow: '0 4px 12px rgba(99, 102, 241, 0.08)'
                 }}>
                   <div style={{ display: 'flex', marginLeft: 8 }}>
                     {friendsGoing.map((f, i) => (
                       <div key={i} style={{
-                        width: 28,
-                        height: 28,
+                        width: 30,
+                        height: 30,
                         borderRadius: '50%',
                         background: '#6366f1',
-                        border: '2px solid #0f172a',
+                        border: '2px solid #ffffff',
                         marginLeft: -8,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: '0.72rem',
-                        fontWeight: 700
+                        fontSize: '0.74rem',
+                        fontWeight: 700,
+                        color: '#fff',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
                       }} title={`${f.name} (${f.department})`}>
                         {f.name.charAt(0)}
                       </div>
                     ))}
                   </div>
-                  <div style={{ fontSize: '0.85rem' }}>
-                    <strong style={{ color: '#c084fc' }}>Friends Going (Graph Traversal):</strong>{' '}
+                  <div style={{ fontSize: '0.88rem', color: '#334155' }}>
+                    <strong style={{ color: '#7e22ce' }}>Friends Going (Graph Traversal):</strong>{' '}
                     {friendsGoing.map(f => f.name).join(', ')} from your past shared events are registered!
                   </div>
                 </div>
@@ -349,63 +375,86 @@ export default function EventDetailModal({
 
               {/* Registration Action Zone */}
               <div style={{
-                background: 'rgba(255, 255, 255, 0.04)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                borderRadius: 14,
-                padding: 20,
+                background: 'rgba(248, 250, 252, 0.9)',
+                border: '1.5px solid rgba(226, 232, 240, 0.9)',
+                borderRadius: 16,
+                padding: 22,
                 marginBottom: 24,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 flexWrap: 'wrap',
-                gap: 16
+                gap: 16,
+                boxShadow: '0 4px 14px rgba(100, 116, 139, 0.04)'
               }}>
-                <div>
-                  <div style={{ fontSize: '0.82rem', color: '#94a3b8' }}>Registration Status</div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                    {event.userRegistrationStatus ? (
-                      <span className={`badge ${event.userRegistrationStatus === 'Registered' ? 'badge-success' : 'badge-warning'}`} style={{ fontSize: '0.9rem', padding: '6px 14px' }}>
-                        {event.userRegistrationStatus === 'Registered' ? 'Confirmed Participant' : 'Waitlisted (Position #1)'}
-                      </span>
-                    ) : (
-                      <span>{event.seatsLeft > 0 ? `${event.seatsLeft} Seats Available` : 'Event Full (Waitlist Open)'}</span>
-                    )}
+                {event.status === 'Pending' ? (
+                  <div style={{
+                    width: '100%',
+                    padding: '14px 18px',
+                    borderRadius: 10,
+                    background: 'rgba(245, 158, 11, 0.15)',
+                    border: '1px solid rgba(245, 158, 11, 0.3)',
+                    color: '#fcd34d',
+                    fontSize: '0.88rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12
+                  }}>
+                    <Clock size={20} color="#f59e0b" style={{ flexShrink: 0 }} />
+                    <div>
+                      <strong>Pending Admin Approval:</strong> This event was issued by <strong>{event.clubName}</strong> and is currently awaiting approval from Campus Administration. Registrations will open immediately once approved!
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <>
+                    <div>
+                      <div style={{ fontSize: '0.82rem', color: '#94a3b8' }}>Registration Status</div>
+                      <div style={{ fontSize: '1.1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                        {event.userRegistrationStatus ? (
+                          <span className={`badge ${event.userRegistrationStatus === 'Registered' ? 'badge-success' : 'badge-warning'}`} style={{ fontSize: '0.9rem', padding: '6px 14px' }}>
+                            {event.userRegistrationStatus === 'Registered' ? 'Confirmed Participant' : 'Waitlisted (Position #1)'}
+                          </span>
+                        ) : (
+                          <span>{event.seatsLeft > 0 ? `${event.seatsLeft} Seats Available` : 'Event Full (Waitlist Open)'}</span>
+                        )}
+                      </div>
+                    </div>
 
-                <div style={{ display: 'flex', gap: 12 }}>
-                  {event.userRegistrationStatus ? (
-                    <>
-                      {event.userRegistrationStatus === 'Registered' && (
+                    <div style={{ display: 'flex', gap: 12 }}>
+                      {event.userRegistrationStatus ? (
+                        <>
+                          {event.userRegistrationStatus === 'Registered' && (
+                            <button 
+                              className="btn btn-secondary"
+                              onClick={() => {
+                                onClose();
+                                if (onViewTicket) onViewTicket(event);
+                              }}
+                            >
+                              View Pass & QR
+                            </button>
+                          )}
+                          <button 
+                            className="btn btn-outline-danger"
+                            onClick={handleCancelRegistration}
+                            disabled={actionLoading}
+                          >
+                            Cancel Registration
+                          </button>
+                        </>
+                      ) : (
                         <button 
-                          className="btn btn-secondary"
-                          onClick={() => {
-                            onClose();
-                            if (onViewTicket) onViewTicket(event);
-                          }}
+                          className="btn btn-primary"
+                          onClick={handleRegister}
+                          disabled={actionLoading || event.status !== 'Approved'}
+                          style={{ padding: '12px 24px', fontSize: '1rem' }}
                         >
-                          View Pass & QR
+                          {actionLoading ? 'Processing...' : event.seatsLeft > 0 ? 'Register for Event' : 'Join Waitlist'}
                         </button>
                       )}
-                      <button 
-                        className="btn btn-outline-danger"
-                        onClick={handleCancelRegistration}
-                        disabled={actionLoading}
-                      >
-                        Cancel Registration
-                      </button>
-                    </>
-                  ) : (
-                    <button 
-                      className="btn btn-primary"
-                      onClick={handleRegister}
-                      disabled={actionLoading || event.status !== 'Approved'}
-                      style={{ padding: '12px 24px', fontSize: '1rem' }}
-                    >
-                      {actionLoading ? 'Processing...' : event.seatsLeft > 0 ? 'Register for Event' : 'Join Waitlist'}
-                    </button>
-                  )}
-                </div>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Teams Section (If maxTeamSize > 0) */}
@@ -456,30 +505,31 @@ export default function EventDetailModal({
 
                   {/* List of Teams */}
                   {teams.length === 0 ? (
-                    <div style={{ padding: 16, borderRadius: 10, background: 'rgba(255, 255, 255, 0.02)', textAlign: 'center', color: '#64748b', fontSize: '0.88rem' }}>
+                    <div style={{ padding: 18, borderRadius: 12, background: 'rgba(241, 245, 249, 0.75)', border: '1.5px solid rgba(226, 232, 240, 0.85)', textAlign: 'center', color: '#64748b', fontSize: '0.88rem' }}>
                       No teams formed yet for this event. Register and create the first team!
                     </div>
                   ) : (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
                       {teams.map((t) => (
                         <div key={t.teamId} style={{
-                          background: 'rgba(255, 255, 255, 0.03)',
-                          border: '1px solid rgba(255, 255, 255, 0.08)',
-                          borderRadius: 10,
-                          padding: 14
+                          background: 'rgba(248, 250, 252, 0.9)',
+                          border: '1.5px solid rgba(226, 232, 240, 0.9)',
+                          borderRadius: 14,
+                          padding: 16,
+                          boxShadow: '0 2px 6px rgba(100, 116, 139, 0.04)'
                         }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                            <div style={{ fontWeight: 700, color: '#f8fafc' }}>{t.teamName}</div>
+                            <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.98rem' }}>{t.teamName}</div>
                             <span className="badge badge-purple">{t.members?.length || 0} / {event.maxTeamSize}</span>
                           </div>
 
-                          <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: 8 }}>
-                            Leader: <strong style={{ color: '#818cf8' }}>{t.leaderName}</strong>
+                          <div style={{ fontSize: '0.82rem', color: '#64748b', marginBottom: 8 }}>
+                            Leader: <strong style={{ color: '#4f46e5' }}>{t.leaderName}</strong>
                           </div>
 
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 10 }}>
                             {t.members?.map((m) => (
-                              <span key={m.studentId} className="badge badge-info" style={{ fontSize: '0.72rem' }}>
+                              <span key={m.studentId} className="badge badge-info" style={{ fontSize: '0.74rem' }}>
                                 {m.name} {m.isLeader ? '👑' : ''}
                               </span>
                             ))}
@@ -491,7 +541,7 @@ export default function EventDetailModal({
                               <select 
                                 value={memberStudentId} 
                                 onChange={(e) => setMemberStudentId(e.target.value)}
-                                style={{ flex: 1, fontSize: '0.78rem', padding: '6px 8px' }}
+                                style={{ flex: 1, fontSize: '0.82rem', padding: '6px 8px' }}
                               >
                                 <option value="">Select registered peer...</option>
                                 {teammateSuggestions.map((s) => (
@@ -502,7 +552,7 @@ export default function EventDetailModal({
                               </select>
                               <button 
                                 className="btn btn-secondary" 
-                                style={{ padding: '4px 10px', fontSize: '0.75rem' }}
+                                style={{ padding: '4px 10px', fontSize: '0.78rem' }}
                                 onClick={() => handleAddMember(t.teamId)}
                               >
                                 <UserPlus size={12} /> Add
@@ -518,24 +568,24 @@ export default function EventDetailModal({
 
               {/* Feedback Section */}
               <div>
-                <h3 style={{ fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-                  <MessageSquare size={18} color="#38bdf8" /> Attendee Feedback & Ratings
+                <h3 style={{ fontSize: '1.18rem', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, color: '#0f172a', fontWeight: 800 }}>
+                  <MessageSquare size={18} color="#0284c7" /> Attendee Feedback & Ratings
                 </h3>
 
                 {/* Submit Feedback if attended */}
                 {event.attendedCount > 0 && user && (
                   <form onSubmit={handleSubmitFeedback} style={{
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    background: 'rgba(241, 245, 249, 0.75)',
+                    border: '1.5px solid rgba(226, 232, 240, 0.9)',
                     padding: 16,
-                    borderRadius: 12,
+                    borderRadius: 14,
                     marginBottom: 16
                   }}>
-                    <div style={{ fontSize: '0.88rem', fontWeight: 600, marginBottom: 8 }}>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0f172a', marginBottom: 8 }}>
                       Leave your feedback (Only students who attended):
                     </div>
                     <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 10 }}>
-                      <span style={{ fontSize: '0.82rem', color: '#94a3b8' }}>Rating:</span>
+                      <span style={{ fontSize: '0.84rem', color: '#64748b', fontWeight: 600 }}>Rating:</span>
                       {[1, 2, 3, 4, 5].map((star) => (
                         <button
                           key={star}
@@ -543,12 +593,14 @@ export default function EventDetailModal({
                           onClick={() => setFeedbackRating(star)}
                           style={{
                             background: 'transparent',
-                            color: star <= feedbackRating ? '#fbbf24' : '#475569',
+                            color: star <= feedbackRating ? '#f59e0b' : '#cbd5e1',
                             fontSize: '1.2rem',
-                            display: 'flex'
+                            display: 'flex',
+                            border: 'none',
+                            cursor: 'pointer'
                           }}
                         >
-                          <Star size={20} fill={star <= feedbackRating ? '#fbbf24' : 'none'} />
+                          <Star size={20} fill={star <= feedbackRating ? '#f59e0b' : 'none'} />
                         </button>
                       ))}
                     </div>
@@ -568,23 +620,23 @@ export default function EventDetailModal({
 
                 {/* Feedback List */}
                 {feedbacks.length === 0 ? (
-                  <div style={{ color: '#64748b', fontSize: '0.85rem' }}>No feedback submitted yet.</div>
+                  <div style={{ color: '#64748b', fontSize: '0.88rem' }}>No feedback submitted yet.</div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {feedbacks.map((fb) => (
                       <div key={fb.feedbackId} style={{
-                        padding: 12,
-                        borderRadius: 8,
-                        background: 'rgba(255, 255, 255, 0.02)',
-                        border: '1px solid rgba(255, 255, 255, 0.05)'
+                        padding: 14,
+                        borderRadius: 10,
+                        background: 'rgba(248, 250, 252, 0.9)',
+                        border: '1.5px solid rgba(226, 232, 240, 0.85)'
                       }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                          <span style={{ fontWeight: 600, fontSize: '0.88rem', color: '#e2e8f0' }}>{fb.studentName} ({fb.department})</span>
-                          <span style={{ color: '#fbbf24', display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.82rem' }}>
-                            <Star size={14} fill="#fbbf24" /> {fb.rating} / 5
+                          <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#0f172a' }}>{fb.studentName} ({fb.department})</span>
+                          <span style={{ color: '#d97706', display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.84rem', fontWeight: 700 }}>
+                            <Star size={14} fill="#f59e0b" /> {fb.rating} / 5
                           </span>
                         </div>
-                        <div style={{ fontSize: '0.84rem', color: '#94a3b8' }}>"{fb.comment}"</div>
+                        <div style={{ fontSize: '0.86rem', color: '#475569', lineHeight: 1.5 }}>"{fb.comment}"</div>
                       </div>
                     ))}
                   </div>

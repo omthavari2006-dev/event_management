@@ -46,11 +46,24 @@ class EventService {
       throw err;
     }
 
-    return eventRepository.approveEvent(eventId, adminId);
+    const res = await eventRepository.approveEvent(eventId, adminId);
+    await eventRepository.notifyOrganizers(
+      eventId,
+      'Event Approved! 🎉',
+      `Your event "${event.name}" was approved by Campus Administration and is now live for student registrations!`
+    );
+    return res;
   }
 
   async rejectEvent(eventId, reason) {
-    return eventRepository.rejectEvent(eventId, reason);
+    const event = await eventRepository.getEventById(eventId);
+    const res = await eventRepository.rejectEvent(eventId, reason);
+    await eventRepository.notifyOrganizers(
+      eventId,
+      'Event Request Update',
+      `Your event request "${event?.name || eventId}" was not approved by Admin. Reason: ${reason || 'Administrative decision.'}`
+    );
+    return res;
   }
 
   async cancelEvent(eventId) {

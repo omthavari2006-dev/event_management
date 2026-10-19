@@ -109,11 +109,11 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
       alignItems: 'center',
       padding: '48px 24px',
       position: 'relative',
-      background: '#090d16',
+      background: '#f4f6fb',
       backgroundImage: `
-        radial-gradient(circle at 20% 15%, rgba(99, 102, 241, 0.15) 0%, transparent 45%),
-        radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.1) 0%, transparent 45%),
-        radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.05) 0%, transparent 60%)
+        radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.12) 0%, transparent 45%),
+        radial-gradient(circle at 85% 85%, rgba(236, 72, 153, 0.1) 0%, transparent 45%),
+        radial-gradient(circle at 50% 30%, rgba(6, 182, 212, 0.08) 0%, transparent 50%)
       `,
       backgroundAttachment: 'fixed'
     }}>
@@ -123,31 +123,33 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
           display: 'inline-flex',
           alignItems: 'center',
           gap: 8,
-          padding: '6px 18px',
+          padding: '8px 20px',
           borderRadius: 30,
-          background: 'rgba(99, 102, 241, 0.12)',
-          border: '1px solid rgba(99, 102, 241, 0.3)',
-          color: '#818cf8',
-          fontSize: '0.84rem',
+          background: 'rgba(99, 102, 241, 0.08)',
+          border: '1px solid rgba(99, 102, 241, 0.25)',
+          color: '#4f46e5',
+          fontSize: '0.86rem',
           fontWeight: 700,
           marginBottom: 18,
+          boxShadow: '0 4px 14px rgba(99, 102, 241, 0.08)',
           letterSpacing: '0.02em'
         }}>
-          <Sparkles size={15} /> Campus Event Management System • Neo4j Graph DBMS
+          <Sparkles size={16} /> Campus Event Management System • Neo4j Graph DBMS
         </div>
 
         <h1 style={{
           fontSize: '3.2rem',
-          lineHeight: 1.12,
+          lineHeight: 1.15,
           marginBottom: 14,
           letterSpacing: '-0.03em',
-          background: 'linear-gradient(135deg, #ffffff 0%, #cbd5e1 50%, #94a3b8 100%)',
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #475569 100%)',
           WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent'
+          WebkitTextFillColor: 'transparent',
+          fontWeight: 800
         }}>
           Select Your Campus Role to Begin
         </h1>
-        <p style={{ color: '#94a3b8', fontSize: '1.1rem', lineHeight: 1.6, maxWidth: 650, margin: '0 auto' }}>
+        <p style={{ color: '#64748b', fontSize: '1.1rem', lineHeight: 1.6, maxWidth: 650, margin: '0 auto' }}>
           Choose your authorized role below. Each portal provides custom capabilities, 
           graph traversals, and governance workflows.
         </p>
@@ -167,15 +169,18 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
           onClick={() => handleSelectRole('Student')}
           style={{
             background: selectedRole === 'Student' 
-              ? 'linear-gradient(135deg, rgba(23, 31, 51, 0.98) 0%, rgba(30, 41, 67, 0.9) 100%)' 
-              : 'rgba(23, 31, 51, 0.5)',
-            border: selectedRole === 'Student' ? '2px solid #6366f1' : '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: 20,
+              ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(238, 242, 255, 0.95) 100%)' 
+              : 'rgba(255, 255, 255, 0.72)',
+            border: selectedRole === 'Student' ? '2px solid #6366f1' : '1.5px solid rgba(226, 232, 240, 0.85)',
+            borderRadius: 22,
             padding: 28,
             cursor: 'pointer',
             transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-            boxShadow: selectedRole === 'Student' ? '0 16px 36px rgba(99, 102, 241, 0.35)' : '0 4px 16px rgba(0,0,0,0.2)',
+            boxShadow: selectedRole === 'Student' 
+              ? '0 20px 38px -8px rgba(99, 102, 241, 0.25), inset 0 1px 2px #ffffff' 
+              : '0 10px 24px -4px rgba(100, 116, 139, 0.08), inset 0 1px 1px #ffffff',
             transform: selectedRole === 'Student' ? 'translateY(-6px)' : 'none',
+            backdropFilter: 'blur(16px)',
             position: 'relative',
             overflow: 'hidden'
           }}
@@ -189,10 +194,11 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
               color: '#fff',
               fontSize: '0.72rem',
               fontWeight: 800,
-              padding: '4px 14px',
-              borderBottomLeftRadius: 12
+              padding: '5px 16px',
+              borderBottomLeftRadius: 12,
+              letterSpacing: '0.05em'
             }}>
-              SELECTED
+              ACTIVE ROLE
             </div>
           )}
 
@@ -206,17 +212,17 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
             justifyContent: 'center',
             color: '#fff',
             marginBottom: 18,
-            boxShadow: '0 8px 20px rgba(99, 102, 241, 0.4)'
+            boxShadow: '0 8px 20px rgba(99, 102, 241, 0.3)'
           }}>
             <GraduationCap size={28} />
           </div>
 
-          <h3 style={{ fontSize: '1.35rem', color: '#fff', marginBottom: 6 }}>Student Portal</h3>
-          <p style={{ fontSize: '0.88rem', color: '#94a3b8', lineHeight: 1.55, marginBottom: 16 }}>
+          <h3 style={{ fontSize: '1.35rem', color: '#0f172a', fontWeight: 700, marginBottom: 8 }}>Student Portal</h3>
+          <p style={{ fontSize: '0.88rem', color: '#475569', lineHeight: 1.55, marginBottom: 16 }}>
             Browse events, register with capacity locks, join waitlists, form teams, and download verified certificates.
           </p>
 
-          <div style={{ fontSize: '0.78rem', color: '#818cf8', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ fontSize: '0.82rem', color: '#4f46e5', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
             <span>Personalized Recommendations</span> &rarr;
           </div>
         </div>
@@ -226,15 +232,18 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
           onClick={() => handleSelectRole('Organizer')}
           style={{
             background: selectedRole === 'Organizer' 
-              ? 'linear-gradient(135deg, rgba(38, 24, 48, 0.98) 0%, rgba(30, 35, 65, 0.9) 100%)' 
-              : 'rgba(23, 31, 51, 0.5)',
-            border: selectedRole === 'Organizer' ? '2px solid #ec4899' : '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: 20,
+              ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(253, 242, 248, 0.95) 100%)' 
+              : 'rgba(255, 255, 255, 0.72)',
+            border: selectedRole === 'Organizer' ? '2px solid #ec4899' : '1.5px solid rgba(226, 232, 240, 0.85)',
+            borderRadius: 22,
             padding: 28,
             cursor: 'pointer',
             transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-            boxShadow: selectedRole === 'Organizer' ? '0 16px 36px rgba(236, 72, 153, 0.35)' : '0 4px 16px rgba(0,0,0,0.2)',
+            boxShadow: selectedRole === 'Organizer' 
+              ? '0 20px 38px -8px rgba(236, 72, 153, 0.25), inset 0 1px 2px #ffffff' 
+              : '0 10px 24px -4px rgba(100, 116, 139, 0.08), inset 0 1px 1px #ffffff',
             transform: selectedRole === 'Organizer' ? 'translateY(-6px)' : 'none',
+            backdropFilter: 'blur(16px)',
             position: 'relative',
             overflow: 'hidden'
           }}
@@ -248,10 +257,11 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
               color: '#fff',
               fontSize: '0.72rem',
               fontWeight: 800,
-              padding: '4px 14px',
-              borderBottomLeftRadius: 12
+              padding: '5px 16px',
+              borderBottomLeftRadius: 12,
+              letterSpacing: '0.05em'
             }}>
-              SELECTED
+              ACTIVE ROLE
             </div>
           )}
 
@@ -265,17 +275,17 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
             justifyContent: 'center',
             color: '#fff',
             marginBottom: 18,
-            boxShadow: '0 8px 20px rgba(236, 72, 153, 0.4)'
+            boxShadow: '0 8px 20px rgba(236, 72, 153, 0.3)'
           }}>
             <Users size={28} />
           </div>
 
-          <h3 style={{ fontSize: '1.35rem', color: '#fff', marginBottom: 6 }}>Club Organizer Studio</h3>
-          <p style={{ fontSize: '0.88rem', color: '#94a3b8', lineHeight: 1.55, marginBottom: 16 }}>
-            Create events with venue clash validation, manage registrations, track attendance, and declare winners.
+          <h3 style={{ fontSize: '1.35rem', color: '#0f172a', fontWeight: 700, marginBottom: 8 }}>Club Organizer Studio</h3>
+          <p style={{ fontSize: '0.88rem', color: '#475569', lineHeight: 1.55, marginBottom: 16 }}>
+            Issue events with specifications, manage registrations, track attendance, and declare winners.
           </p>
 
-          <div style={{ fontSize: '0.78rem', color: '#f472b6', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ fontSize: '0.82rem', color: '#db2777', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
             <span>Venue Clash Guard & Check-in</span> &rarr;
           </div>
         </div>
@@ -285,15 +295,18 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
           onClick={() => handleSelectRole('Admin')}
           style={{
             background: selectedRole === 'Admin' 
-              ? 'linear-gradient(135deg, rgba(42, 24, 24, 0.98) 0%, rgba(35, 30, 50, 0.9) 100%)' 
-              : 'rgba(23, 31, 51, 0.5)',
-            border: selectedRole === 'Admin' ? '2px solid #f59e0b' : '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: 20,
+              ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(254, 243, 199, 0.95) 100%)' 
+              : 'rgba(255, 255, 255, 0.72)',
+            border: selectedRole === 'Admin' ? '2px solid #f59e0b' : '1.5px solid rgba(226, 232, 240, 0.85)',
+            borderRadius: 22,
             padding: 28,
             cursor: 'pointer',
             transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-            boxShadow: selectedRole === 'Admin' ? '0 16px 36px rgba(245, 158, 11, 0.35)' : '0 4px 16px rgba(0,0,0,0.2)',
+            boxShadow: selectedRole === 'Admin' 
+              ? '0 20px 38px -8px rgba(245, 158, 11, 0.25), inset 0 1px 2px #ffffff' 
+              : '0 10px 24px -4px rgba(100, 116, 139, 0.08), inset 0 1px 1px #ffffff',
             transform: selectedRole === 'Admin' ? 'translateY(-6px)' : 'none',
+            backdropFilter: 'blur(16px)',
             position: 'relative',
             overflow: 'hidden'
           }}
@@ -307,10 +320,11 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
               color: '#fff',
               fontSize: '0.72rem',
               fontWeight: 800,
-              padding: '4px 14px',
-              borderBottomLeftRadius: 12
+              padding: '5px 16px',
+              borderBottomLeftRadius: 12,
+              letterSpacing: '0.05em'
             }}>
-              SELECTED
+              ACTIVE ROLE
             </div>
           )}
 
@@ -324,18 +338,18 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
             justifyContent: 'center',
             color: '#fff',
             marginBottom: 18,
-            boxShadow: '0 8px 20px rgba(245, 158, 11, 0.4)'
+            boxShadow: '0 8px 20px rgba(245, 158, 11, 0.3)'
           }}>
             <Shield size={28} />
           </div>
 
-          <h3 style={{ fontSize: '1.35rem', color: '#fff', marginBottom: 6 }}>Campus Admin Center</h3>
-          <p style={{ fontSize: '0.88rem', color: '#94a3b8', lineHeight: 1.55, marginBottom: 16 }}>
+          <h3 style={{ fontSize: '1.35rem', color: '#0f172a', fontWeight: 700, marginBottom: 8 }}>Campus Admin Center</h3>
+          <p style={{ fontSize: '0.88rem', color: '#475569', lineHeight: 1.55, marginBottom: 16 }}>
             Dean of Student Affairs: approve clubs & events, monitor venue conflicts, and review Chart.js analytics.
           </p>
 
-          <div style={{ fontSize: '0.78rem', color: '#fbbf24', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span>Auditing & System Analytics</span> &rarr;
+          <div style={{ fontSize: '0.82rem', color: '#d97706', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span>Approval Desk & Analytics</span> &rarr;
           </div>
         </div>
       </div>
@@ -346,14 +360,16 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
         width: '100%',
         padding: 36,
         borderRadius: 24,
-        boxShadow: '0 24px 60px rgba(0, 0, 0, 0.6)',
-        border: '1px solid rgba(255, 255, 255, 0.1)'
+        boxShadow: '0 24px 60px -12px rgba(100, 116, 139, 0.16), 0 8px 16px -4px rgba(100, 116, 139, 0.08), inset 0 1px 2px #ffffff',
+        border: '1.5px solid rgba(255, 255, 255, 0.95)',
+        background: 'rgba(255, 255, 255, 0.88)',
+        backdropFilter: 'blur(24px)'
       }}>
         <div style={{ marginBottom: 24 }}>
-          <h2 style={{ fontSize: '1.6rem', color: '#fff', marginBottom: 4 }}>
+          <h2 style={{ fontSize: '1.6rem', color: '#0f172a', fontWeight: 800, marginBottom: 4 }}>
             {isRegistering ? 'Register New Student' : `Sign In as ${selectedRole === 'Admin' ? 'Campus Administrator' : selectedRole === 'Organizer' ? 'Club Organizer' : 'Student'}`}
           </h2>
-          <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
+          <div style={{ fontSize: '0.88rem', color: '#64748b' }}>
             {selectedRole === 'Admin' && 'Sign in with your Dean or Faculty administrator credentials.'}
             {selectedRole === 'Organizer' && 'Sign in as a club President or Organizer to manage club events.'}
             {selectedRole === 'Student' && 'Sign in with your student email to access passes and registrations.'}
@@ -362,14 +378,15 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
 
         {/* Quick 1-Click Demo Buttons for Viva Presentation */}
         <div style={{
-          background: 'rgba(255, 255, 255, 0.03)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-          borderRadius: 14,
+          background: 'rgba(241, 245, 249, 0.75)',
+          border: '1.5px solid rgba(226, 232, 240, 0.9)',
+          borderRadius: 16,
           padding: 16,
-          marginBottom: 24
+          marginBottom: 24,
+          boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.02)'
         }}>
-          <div style={{ fontSize: '0.74rem', textTransform: 'uppercase', color: '#818cf8', fontWeight: 700, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Sparkles size={13} /> Instant 1-Click Demo Access for {selectedRole}:
+          <div style={{ fontSize: '0.76rem', textTransform: 'uppercase', color: '#4f46e5', fontWeight: 800, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6, letterSpacing: '0.04em' }}>
+            <Sparkles size={14} /> Instant 1-Click Demo Access for {selectedRole}:
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {rolePresets[selectedRole]?.map((preset, idx) => (
@@ -379,33 +396,38 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
                 onClick={() => handleQuickPreset(preset.email)}
                 disabled={loading}
                 style={{
-                  padding: '10px 14px',
-                  borderRadius: 10,
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  padding: '11px 16px',
+                  borderRadius: 12,
+                  background: 'rgba(255, 255, 255, 0.92)',
+                  border: '1px solid rgba(226, 232, 240, 0.9)',
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   cursor: 'pointer',
                   textAlign: 'left',
-                  transition: 'all 0.15s ease'
+                  transition: 'all 0.15s ease',
+                  boxShadow: '0 2px 6px rgba(100, 116, 139, 0.05)'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(99, 102, 241, 0.18)';
-                  e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.4)';
+                  e.currentTarget.style.background = '#ffffff';
+                  e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.5)';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.boxShadow = '0 6px 14px rgba(99, 102, 241, 0.12)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.92)';
+                  e.currentTarget.style.borderColor = 'rgba(226, 232, 240, 0.9)';
+                  e.currentTarget.style.transform = 'none';
+                  e.currentTarget.style.boxShadow = '0 2px 6px rgba(100, 116, 139, 0.05)';
                 }}
               >
                 <div>
-                  <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#f8fafc' }}>{preset.name}</div>
-                  <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{preset.dept || preset.club}</div>
+                  <div style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0f172a' }}>{preset.name}</div>
+                  <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{preset.dept || preset.club}</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span className="badge badge-purple" style={{ fontSize: '0.7rem' }}>{preset.badge}</span>
-                  <span style={{ fontSize: '0.8rem', color: '#38bdf8', fontWeight: 700 }}>Enter &rarr;</span>
+                  <span className="badge badge-purple" style={{ fontSize: '0.72rem' }}>{preset.badge}</span>
+                  <span style={{ fontSize: '0.82rem', color: '#2563eb', fontWeight: 700 }}>Enter &rarr;</span>
                 </div>
               </button>
             ))}
@@ -415,11 +437,12 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
         {error && (
           <div style={{
             padding: '12px 16px',
-            borderRadius: 10,
-            background: 'rgba(239, 68, 68, 0.15)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            color: '#fca5a5',
+            borderRadius: 12,
+            background: 'rgba(239, 68, 68, 0.1)',
+            border: '1.5px solid rgba(239, 68, 68, 0.25)',
+            color: '#b91c1c',
             fontSize: '0.88rem',
+            fontWeight: 600,
             marginBottom: 20
           }}>
             {error}
@@ -431,7 +454,7 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
           {isRegistering && selectedRole === 'Student' && (
             <>
               <div>
-                <label style={{ fontSize: '0.82rem', color: '#94a3b8', display: 'block', marginBottom: 6 }}>Full Name</label>
+                <label style={{ fontSize: '0.84rem', color: '#334155', fontWeight: 600, display: 'block', marginBottom: 6 }}>Full Name</label>
                 <input 
                   type="text" 
                   placeholder="e.g. Alex Rivera" 
@@ -444,7 +467,7 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label style={{ fontSize: '0.82rem', color: '#94a3b8', display: 'block', marginBottom: 6 }}>Department</label>
+                  <label style={{ fontSize: '0.84rem', color: '#334155', fontWeight: 600, display: 'block', marginBottom: 6 }}>Department</label>
                   <select value={department} onChange={(e) => setDepartment(e.target.value)} style={{ width: '100%' }}>
                     <option value="Computer Science">Computer Science</option>
                     <option value="Electronics & Comm">Electronics & Comm</option>
@@ -455,7 +478,7 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.82rem', color: '#94a3b8', display: 'block', marginBottom: 6 }}>Academic Year</label>
+                  <label style={{ fontSize: '0.84rem', color: '#334155', fontWeight: 600, display: 'block', marginBottom: 6 }}>Academic Year</label>
                   <select value={year} onChange={(e) => setYear(e.target.value)} style={{ width: '100%' }}>
                     <option value="1">Year 1</option>
                     <option value="2">Year 2</option>
@@ -466,7 +489,7 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
               </div>
 
               <div>
-                <label style={{ fontSize: '0.82rem', color: '#94a3b8', display: 'block', marginBottom: 6 }}>Phone (Optional)</label>
+                <label style={{ fontSize: '0.84rem', color: '#334155', fontWeight: 600, display: 'block', marginBottom: 6 }}>Phone (Optional)</label>
                 <input 
                   type="text" 
                   placeholder="+1-555-0101" 
@@ -479,7 +502,7 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
           )}
 
           <div>
-            <label style={{ fontSize: '0.82rem', color: '#94a3b8', display: 'block', marginBottom: 6 }}>Campus Email Address</label>
+            <label style={{ fontSize: '0.84rem', color: '#334155', fontWeight: 600, display: 'block', marginBottom: 6 }}>Campus Email Address</label>
             <input 
               type="email" 
               value={email} 
@@ -490,7 +513,7 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
           </div>
 
           <div>
-            <label style={{ fontSize: '0.82rem', color: '#94a3b8', display: 'block', marginBottom: 6 }}>Password</label>
+            <label style={{ fontSize: '0.84rem', color: '#334155', fontWeight: 600, display: 'block', marginBottom: 6 }}>Password</label>
             <input 
               type="password" 
               value={password} 
@@ -509,7 +532,8 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
               fontSize: '1rem',
               fontWeight: 700,
               marginTop: 8,
-              borderRadius: 12,
+              borderRadius: 14,
+              boxShadow: '0 8px 20px rgba(99, 102, 241, 0.35)',
               background: selectedRole === 'Admin' 
                 ? 'linear-gradient(135deg, #f59e0b, #ef4444)' 
                 : selectedRole === 'Organizer' 
@@ -523,12 +547,12 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
 
         {/* Toggle Register for Student */}
         {selectedRole === 'Student' && (
-          <div style={{ textAlign: 'center', marginTop: 16, fontSize: '0.88rem', color: '#94a3b8' }}>
+          <div style={{ textAlign: 'center', marginTop: 18, fontSize: '0.88rem', color: '#64748b' }}>
             {isRegistering ? 'Already have a registered account?' : 'New student on campus?'}{' '}
             <button 
               type="button"
               onClick={() => setIsRegistering(!isRegistering)}
-              style={{ background: 'transparent', color: '#818cf8', fontWeight: 700, cursor: 'pointer' }}
+              style={{ background: 'transparent', color: '#4f46e5', fontWeight: 700, cursor: 'pointer', border: 'none' }}
             >
               {isRegistering ? 'Sign In' : 'Register Here'}
             </button>
@@ -539,7 +563,7 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
         <div style={{
           marginTop: 24,
           paddingTop: 18,
-          borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+          borderTop: '1px solid rgba(226, 232, 240, 0.8)',
           textAlign: 'center'
         }}>
           <button 
@@ -547,14 +571,18 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
             onClick={onExploreGuest}
             style={{
               background: 'transparent',
-              color: '#94a3b8',
+              color: '#64748b',
               fontSize: '0.88rem',
               display: 'inline-flex',
               alignItems: 'center',
               gap: 8,
               cursor: 'pointer',
-              fontWeight: 600
+              fontWeight: 600,
+              border: 'none',
+              transition: 'color 0.15s ease'
             }}
+            onMouseEnter={(e) => e.currentTarget.style.color = '#0f172a'}
+            onMouseLeave={(e) => e.currentTarget.style.color = '#64748b'}
           >
             <Compass size={17} /> Continue as Public Guest Explorer (Browse Events & Verify Certificates) &rarr;
           </button>

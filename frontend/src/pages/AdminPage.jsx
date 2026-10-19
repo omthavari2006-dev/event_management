@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Shield, Check, X, AlertTriangle, Users, Award, 
-  BarChart3, RefreshCw, CheckCircle, ShieldAlert 
+  BarChart3, RefreshCw, CheckCircle, ShieldAlert,
+  Calendar, MapPin, Clock, FileText
 } from 'lucide-react';
 import { api } from '../api/client';
 import {
@@ -41,7 +42,30 @@ export default function AdminPage({ user, onRefresh }) {
         api.getAdminAnalytics()
       ]);
       setPendingClubs(clubsRes.clubs || []);
-      setPendingEvents(eventsRes.events || []);
+
+      // Check venue clash for each pending event dynamically
+      const rawEvents = eventsRes.events || [];
+      const eventsWithClash = await Promise.all(
+        rawEvents.map(async (evt) => {
+          try {
+            const clashRes = await api.checkVenueClash(
+              evt.venue,
+              evt.startDateTime,
+              evt.endDateTime,
+              evt.eventId
+            );
+            return {
+              ...evt,
+              hasClash: clashRes.hasClash,
+              clashes: clashRes.clashes || []
+            };
+          } catch {
+            return { ...evt, hasClash: false, clashes: [] };
+          }
+        })
+      );
+
+      setPendingEvents(eventsWithClash);
       setAnalytics(analyticsRes.analytics || null);
     } catch (err) {
       console.error(err);
@@ -131,23 +155,23 @@ export default function AdminPage({ user, onRefresh }) {
   const chartOptions = {
     responsive: true,
     plugins: {
-      legend: { labels: { color: '#cbd5e1' } }
+      legend: { labels: { color: '#334155', font: { weight: '600' } } }
     },
     scales: {
-      x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-      y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+      x: { ticks: { color: '#64748b' }, grid: { color: 'rgba(226, 232, 240, 0.8)' } },
+      y: { ticks: { color: '#64748b' }, grid: { color: 'rgba(226, 232, 240, 0.8)' } }
     }
   };
 
   return (
     <div style={{ maxWidth: 1300, margin: '0 auto', padding: '32px 24px' }}>
       {/* Admin Title */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28, flexWrap: 'wrap', gap: 16 }}>
         <div>
-          <h1 style={{ fontSize: '2rem', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Shield size={28} color="#f59e0b" /> Administrator Command Center
+          <h1 style={{ fontSize: '2rem', display: 'flex', alignItems: 'center', gap: 10, color: '#0f172a', fontWeight: 800 }}>
+            <Shield size={28} color="#d97706" /> Administrator Command Center
           </h1>
-          <p style={{ color: '#94a3b8', fontSize: '0.95rem' }}>
+          <p style={{ color: '#64748b', fontSize: '0.95rem' }}>
             System-wide governance, venue clash verification, club approvals, and Neo4j graph analytics.
           </p>
         </div>
@@ -159,10 +183,11 @@ export default function AdminPage({ user, onRefresh }) {
       {message && (
         <div style={{
           padding: '12px 18px',
-          borderRadius: 10,
-          background: 'rgba(16, 185, 129, 0.15)',
-          border: '1px solid rgba(16, 185, 129, 0.3)',
-          color: '#34d399',
+          borderRadius: 12,
+          background: 'rgba(16, 185, 129, 0.1)',
+          border: '1.5px solid rgba(16, 185, 129, 0.3)',
+          color: '#065f46',
+          fontWeight: 600,
           marginBottom: 20
         }}>
           {message}
@@ -177,32 +202,32 @@ export default function AdminPage({ user, onRefresh }) {
         marginBottom: 32
       }}>
         <div className="glass-panel" style={{ padding: 20 }}>
-          <div style={{ fontSize: '0.78rem', color: '#94a3b8', textTransform: 'uppercase' }}>Active Students</div>
-          <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#f8fafc', marginTop: 4 }}>
+          <div style={{ fontSize: '0.76rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Active Students</div>
+          <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0f172a', marginTop: 4 }}>
             {analytics?.overview?.totalStudents || 8}
           </div>
         </div>
         <div className="glass-panel" style={{ padding: 20 }}>
-          <div style={{ fontSize: '0.78rem', color: '#94a3b8', textTransform: 'uppercase' }}>Campus Clubs</div>
-          <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#38bdf8', marginTop: 4 }}>
+          <div style={{ fontSize: '0.76rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Campus Clubs</div>
+          <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#0284c7', marginTop: 4 }}>
             {analytics?.overview?.totalClubs || 5}
           </div>
         </div>
         <div className="glass-panel" style={{ padding: 20 }}>
-          <div style={{ fontSize: '0.78rem', color: '#94a3b8', textTransform: 'uppercase' }}>Events Hosted</div>
-          <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#c084fc', marginTop: 4 }}>
+          <div style={{ fontSize: '0.76rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Events Hosted</div>
+          <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#7e22ce', marginTop: 4 }}>
             {analytics?.overview?.totalEvents || 6}
           </div>
         </div>
         <div className="glass-panel" style={{ padding: 20 }}>
-          <div style={{ fontSize: '0.78rem', color: '#94a3b8', textTransform: 'uppercase' }}>Total Registrations</div>
-          <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#34d399', marginTop: 4 }}>
+          <div style={{ fontSize: '0.76rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Total Registrations</div>
+          <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#059669', marginTop: 4 }}>
             {analytics?.overview?.totalRegistrations || 12}
           </div>
         </div>
         <div className="glass-panel" style={{ padding: 20 }}>
-          <div style={{ fontSize: '0.78rem', color: '#94a3b8', textTransform: 'uppercase' }}>Issued Certificates</div>
-          <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#f59e0b', marginTop: 4 }}>
+          <div style={{ fontSize: '0.76rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Issued Certificates</div>
+          <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#d97706', marginTop: 4 }}>
             {analytics?.overview?.totalCertificates || 3}
           </div>
         </div>
@@ -212,68 +237,143 @@ export default function AdminPage({ user, onRefresh }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: 24, marginBottom: 36 }}>
         {/* Pending Events with Venue Clash Alert */}
         <div className="glass-panel" style={{ padding: 24 }}>
-          <h3 style={{ fontSize: '1.2rem', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Calendar size={18} color="#f59e0b" /> Pending Event Approvals ({pendingEvents.length})
+          <h3 style={{ fontSize: '1.25rem', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8, color: '#0f172a', fontWeight: 800 }}>
+            <Calendar size={18} color="#d97706" /> Pending Event Approvals ({pendingEvents.length})
           </h3>
 
           {pendingEvents.length === 0 ? (
-            <div style={{ color: '#64748b', fontSize: '0.9rem' }}>No events awaiting approval.</div>
+            <div style={{ color: '#64748b', fontSize: '0.92rem' }}>No events awaiting approval.</div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {pendingEvents.map(evt => {
-                // If evt is evt-006, it clashes with evt-001!
-                const isClashing = evt.venue === 'Auditorium Hall A';
+                const isClashing = evt.hasClash;
 
                 return (
                   <div key={evt.eventId} style={{
-                    padding: 16,
-                    borderRadius: 12,
-                    background: isClashing ? 'rgba(239, 68, 68, 0.08)' : 'rgba(255, 255, 255, 0.03)',
-                    border: isClashing ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(255, 255, 255, 0.06)'
+                    padding: 18,
+                    borderRadius: 16,
+                    background: isClashing ? 'rgba(254, 242, 242, 0.95)' : 'rgba(248, 250, 252, 0.9)',
+                    border: isClashing ? '1.5px solid rgba(239, 68, 68, 0.45)' : '1.5px solid rgba(226, 232, 240, 0.9)',
+                    boxShadow: '0 4px 14px rgba(100, 116, 139, 0.05)'
                   }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <span style={{ fontWeight: 700, fontSize: '1rem', color: '#f8fafc' }}>{evt.name}</span>
-                      <span className="badge badge-warning">{evt.type}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                          <span style={{ fontWeight: 700, fontSize: '1.08rem', color: '#0f172a' }}>{evt.name}</span>
+                          <span className="badge badge-warning">{evt.type}</span>
+                          {evt.clubName && <span className="badge badge-purple">{evt.clubName}</span>}
+                        </div>
+                        {evt.description && (
+                          <p style={{ fontSize: '0.86rem', color: '#475569', lineHeight: 1.5, margin: '4px 0 10px' }}>
+                            {evt.description}
+                          </p>
+                        )}
+                      </div>
                     </div>
 
-                    <div style={{ fontSize: '0.82rem', color: '#94a3b8', marginBottom: 10 }}>
-                      Venue: <strong style={{ color: '#fff' }}>{evt.venue}</strong> • {new Date(evt.startDateTime).toLocaleDateString()}
-                    </div>
-
-                    {isClashing && (
+                    {/* Requirements Box */}
+                    {evt.requirements && (
                       <div style={{
-                        padding: '8px 12px',
-                        borderRadius: 8,
-                        background: 'rgba(239, 68, 68, 0.2)',
-                        color: '#fca5a5',
-                        fontSize: '0.8rem',
-                        marginBottom: 10,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 8
+                        padding: '10px 14px',
+                        borderRadius: 10,
+                        background: 'rgba(99, 102, 241, 0.08)',
+                        border: '1px solid rgba(99, 102, 241, 0.25)',
+                        fontSize: '0.84rem',
+                        color: '#334155',
+                        marginBottom: 12
                       }}>
-                        <ShieldAlert size={16} color="#ef4444" />
-                        <span><strong>Venue Conflict:</strong> Clashes with "Campus Hackathon 2026" at Auditorium Hall A!</span>
+                        <div style={{ color: '#4f46e5', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                          <FileText size={14} /> Organizer Requirements & Prerequisites:
+                        </div>
+                        <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.45 }}>{evt.requirements}</div>
                       </div>
                     )}
 
-                    <div style={{ display: 'flex', gap: 8 }}>
+                    {/* Meta Info Grid */}
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                      gap: 8,
+                      fontSize: '0.82rem',
+                      color: '#334155',
+                      marginBottom: 12,
+                      background: 'rgba(241, 245, 249, 0.75)',
+                      padding: '10px 14px',
+                      borderRadius: 10,
+                      border: '1px solid rgba(226, 232, 240, 0.8)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <MapPin size={14} color="#4f46e5" />
+                        <span>Venue: <strong style={{ color: '#0f172a' }}>{evt.venue}</strong></span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <Calendar size={14} color="#0284c7" />
+                        <span>{new Date(evt.startDateTime).toLocaleDateString()} ({new Date(evt.startDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <Clock size={14} color="#d97706" />
+                        <span>Deadline: {new Date(evt.registrationDeadline).toLocaleDateString()}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <Users size={14} color="#059669" />
+                        <span>Capacity: <strong style={{ color: '#0f172a' }}>{evt.maxParticipants} Seats</strong> {evt.maxTeamSize > 0 ? `(Team of ${evt.maxTeamSize})` : '(Solo)'}</span>
+                      </div>
+                    </div>
+
+                    {/* Venue Clash Warning */}
+                    {isClashing && evt.clashes?.length > 0 && (
+                      <div style={{
+                        padding: '10px 14px',
+                        borderRadius: 10,
+                        background: 'rgba(254, 226, 226, 0.95)',
+                        border: '1.5px solid rgba(239, 68, 68, 0.4)',
+                        color: '#991b1b',
+                        fontSize: '0.84rem',
+                        marginBottom: 12,
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 10
+                      }}>
+                        <ShieldAlert size={18} color="#dc2626" style={{ flexShrink: 0, marginTop: 2 }} />
+                        <div>
+                          <strong>Venue Conflict Detected!</strong>
+                          <div>
+                            This slot clashes with approved event <strong>"{evt.clashes[0].clashingEventName}"</strong> at {evt.venue} ({new Date(evt.clashes[0].clashingStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(evt.clashes[0].clashingEnd).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}).
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                       <button 
                         className="btn btn-primary"
-                        style={{ padding: '6px 14px', fontSize: '0.82rem', background: isClashing ? '#64748b' : undefined }}
+                        style={{
+                          padding: '8px 20px',
+                          fontSize: '0.86rem',
+                          background: isClashing ? '#dc2626' : '#10b981',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 6
+                        }}
                         onClick={() => handleApproveEvent(evt.eventId)}
                         disabled={actionLoading}
                       >
-                        <Check size={14} /> Approve Event
+                        <Check size={15} /> Approve Event
                       </button>
                       <button 
                         className="btn btn-outline-danger"
-                        style={{ padding: '6px 14px', fontSize: '0.82rem' }}
+                        style={{ padding: '8px 18px', fontSize: '0.86rem', display: 'inline-flex', alignItems: 'center', gap: 6 }}
                         onClick={() => handleRejectEvent(evt.eventId)}
                         disabled={actionLoading}
                       >
-                        <X size={14} /> Reject
+                        <X size={15} /> Reject
                       </button>
+                      {isClashing && (
+                        <span style={{ fontSize: '0.78rem', color: '#dc2626', fontWeight: 600 }}>
+                          ⚠️ Approving will override or fail conflict check
+                        </span>
+                      )}
                     </div>
                   </div>
                 );
@@ -284,33 +384,34 @@ export default function AdminPage({ user, onRefresh }) {
 
         {/* Pending Clubs */}
         <div className="glass-panel" style={{ padding: 24 }}>
-          <h3 style={{ fontSize: '1.2rem', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Users size={18} color="#38bdf8" /> Pending Club Charter Requests ({pendingClubs.length})
+          <h3 style={{ fontSize: '1.25rem', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8, color: '#0f172a', fontWeight: 800 }}>
+            <Users size={18} color="#0284c7" /> Pending Club Charter Requests ({pendingClubs.length})
           </h3>
 
           {pendingClubs.length === 0 ? (
-            <div style={{ color: '#64748b', fontSize: '0.9rem' }}>No club charters pending review.</div>
+            <div style={{ color: '#64748b', fontSize: '0.92rem' }}>No club charters pending review.</div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {pendingClubs.map(c => (
                 <div key={c.clubId} style={{
                   padding: 16,
-                  borderRadius: 12,
-                  background: 'rgba(255, 255, 255, 0.03)',
-                  border: '1px solid rgba(255, 255, 255, 0.06)'
+                  borderRadius: 14,
+                  background: 'rgba(248, 250, 252, 0.9)',
+                  border: '1.5px solid rgba(226, 232, 240, 0.9)',
+                  boxShadow: '0 2px 8px rgba(100, 116, 139, 0.04)'
                 }}>
-                  <div style={{ fontWeight: 700, fontSize: '1rem', color: '#f8fafc', marginBottom: 4 }}>
+                  <div style={{ fontWeight: 700, fontSize: '1.02rem', color: '#0f172a', marginBottom: 4 }}>
                     {c.name}
                   </div>
-                  <div style={{ fontSize: '0.84rem', color: '#94a3b8', marginBottom: 8 }}>
+                  <div style={{ fontSize: '0.86rem', color: '#475569', marginBottom: 8 }}>
                     {c.description}
                   </div>
-                  <div style={{ fontSize: '0.78rem', color: '#cbd5e1', marginBottom: 12 }}>
-                    Faculty Advisor: <strong>{c.facultyAdvisor}</strong>
+                  <div style={{ fontSize: '0.8rem', color: '#334155', marginBottom: 12 }}>
+                    Faculty Advisor: <strong style={{ color: '#0f172a' }}>{c.facultyAdvisor}</strong>
                   </div>
                   <button 
                     className="btn btn-primary"
-                    style={{ padding: '6px 14px', fontSize: '0.82rem' }}
+                    style={{ padding: '7px 16px', fontSize: '0.84rem' }}
                     onClick={() => handleApproveClub(c.clubId)}
                     disabled={actionLoading}
                   >
@@ -326,12 +427,12 @@ export default function AdminPage({ user, onRefresh }) {
       {/* Analytics Charts (Chart.js) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: 24, marginBottom: 36 }}>
         <div className="glass-panel" style={{ padding: 24 }}>
-          <h3 style={{ fontSize: '1.15rem', marginBottom: 16 }}>Department Participation (Query #5)</h3>
+          <h3 style={{ fontSize: '1.18rem', marginBottom: 16, color: '#0f172a', fontWeight: 800 }}>Department Participation (Query #5)</h3>
           <Bar data={deptChartData} options={chartOptions} />
         </div>
 
         <div className="glass-panel" style={{ padding: 24 }}>
-          <h3 style={{ fontSize: '1.15rem', marginBottom: 16 }}>Event Attendance % (Query #2)</h3>
+          <h3 style={{ fontSize: '1.18rem', marginBottom: 16, color: '#0f172a', fontWeight: 800 }}>Event Attendance % (Query #2)</h3>
           <Bar data={attendanceChartData} options={chartOptions} />
         </div>
       </div>
@@ -340,10 +441,10 @@ export default function AdminPage({ user, onRefresh }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: 24 }}>
         {/* No-Shows */}
         <div className="glass-panel" style={{ padding: 24 }}>
-          <h3 style={{ fontSize: '1.15rem', marginBottom: 12, color: '#f87171' }}>
+          <h3 style={{ fontSize: '1.18rem', marginBottom: 12, color: '#dc2626', fontWeight: 800 }}>
             Registered But Never Attended (Query #4)
           </h3>
-          <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: 14 }}>
+          <div style={{ fontSize: '0.82rem', color: '#64748b', marginBottom: 14 }}>
             Detects students who secured a seat for completed events but failed to check in.
           </div>
           {analytics?.noShows?.length === 0 ? (
@@ -352,17 +453,18 @@ export default function AdminPage({ user, onRefresh }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {analytics?.noShows?.map((ns, idx) => (
                 <div key={idx} style={{
-                  padding: 10,
-                  borderRadius: 8,
-                  background: 'rgba(239, 68, 68, 0.08)',
-                  border: '1px solid rgba(239, 68, 68, 0.2)',
-                  fontSize: '0.85rem',
+                  padding: 12,
+                  borderRadius: 10,
+                  background: 'rgba(254, 242, 242, 0.9)',
+                  border: '1.5px solid rgba(239, 68, 68, 0.25)',
+                  fontSize: '0.88rem',
                   display: 'flex',
-                  justifyContent: 'space-between'
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
                 }}>
                   <div>
-                    <strong style={{ color: '#f8fafc' }}>{ns.studentName}</strong> ({ns.department})
-                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{ns.email}</div>
+                    <strong style={{ color: '#0f172a' }}>{ns.studentName}</strong> ({ns.department})
+                    <div style={{ fontSize: '0.76rem', color: '#64748b' }}>{ns.email}</div>
                   </div>
                   <span className="badge badge-danger">Missed {ns.eventName}</span>
                 </div>
@@ -373,27 +475,27 @@ export default function AdminPage({ user, onRefresh }) {
 
         {/* Club Influence */}
         <div className="glass-panel" style={{ padding: 24 }}>
-          <h3 style={{ fontSize: '1.15rem', marginBottom: 12, color: '#38bdf8' }}>
+          <h3 style={{ fontSize: '1.18rem', marginBottom: 12, color: '#0284c7', fontWeight: 800 }}>
             Club Influence Ranking (Query #11)
           </h3>
-          <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: 14 }}>
+          <div style={{ fontSize: '0.82rem', color: '#64748b', marginBottom: 14 }}>
             Ranked by unique campus student reach across all organized events.
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {analytics?.clubInfluence?.map((ci, idx) => (
               <div key={idx} style={{
-                padding: 10,
-                borderRadius: 8,
-                background: 'rgba(255, 255, 255, 0.02)',
-                border: '1px solid rgba(255, 255, 255, 0.06)',
-                fontSize: '0.85rem',
+                padding: 12,
+                borderRadius: 10,
+                background: 'rgba(248, 250, 252, 0.9)',
+                border: '1.5px solid rgba(226, 232, 240, 0.85)',
+                fontSize: '0.88rem',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center'
               }}>
                 <div>
-                  <span style={{ fontWeight: 700, color: '#818cf8', marginRight: 8 }}>#{idx + 1}</span>
-                  <strong style={{ color: '#f8fafc' }}>{ci.clubName}</strong>
+                  <span style={{ fontWeight: 800, color: '#4f46e5', marginRight: 8 }}>#{idx + 1}</span>
+                  <strong style={{ color: '#0f172a' }}>{ci.clubName}</strong>
                 </div>
                 <span className="badge badge-info">{ci.uniqueStudentsReached} Students Reached</span>
               </div>

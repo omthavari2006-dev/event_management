@@ -66,8 +66,8 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 460, padding: 32 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <h2 style={{ fontSize: '1.5rem' }}>{isRegister ? 'Student Registration' : 'Campus Portal Sign In'}</h2>
-          <button onClick={onClose} style={{ background: 'transparent', color: '#94a3b8' }}>
+          <h2 style={{ fontSize: '1.5rem', color: '#0f172a', fontWeight: 800 }}>{isRegister ? 'Student Registration' : 'Campus Portal Sign In'}</h2>
+          <button onClick={onClose} style={{ background: 'transparent', color: '#64748b', cursor: 'pointer', padding: 4 }}>
             <X size={20} />
           </button>
         </div>
@@ -75,11 +75,12 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
         {error && (
           <div style={{
             padding: '10px 14px',
-            borderRadius: 8,
-            background: 'rgba(239, 68, 68, 0.15)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            color: '#fca5a5',
+            borderRadius: 10,
+            background: 'rgba(239, 68, 68, 0.1)',
+            border: '1px solid rgba(239, 68, 68, 0.25)',
+            color: '#dc2626',
             fontSize: '0.85rem',
+            fontWeight: 600,
             marginBottom: 16
           }}>
             {error}
@@ -90,7 +91,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
           {isRegister && (
             <>
               <div>
-                <label style={{ fontSize: '0.8rem', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Full Name</label>
+                <label style={{ fontSize: '0.82rem', color: '#475569', display: 'block', marginBottom: 5, fontWeight: 600 }}>Full Name</label>
                 <input 
                   type="text" 
                   placeholder="e.g. Alex Rivera" 
@@ -103,7 +104,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 <div>
-                  <label style={{ fontSize: '0.8rem', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Department</label>
+                  <label style={{ fontSize: '0.82rem', color: '#475569', display: 'block', marginBottom: 5, fontWeight: 600 }}>Department</label>
                   <select 
                     value={department} 
                     onChange={(e) => setDepartment(e.target.value)}
@@ -119,7 +120,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.8rem', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Academic Year</label>
+                  <label style={{ fontSize: '0.82rem', color: '#475569', display: 'block', marginBottom: 5, fontWeight: 600 }}>Academic Year</label>
                   <select 
                     value={year} 
                     onChange={(e) => setYear(e.target.value)}
@@ -134,7 +135,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
               </div>
 
               <div>
-                <label style={{ fontSize: '0.8rem', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Phone</label>
+                <label style={{ fontSize: '0.82rem', color: '#475569', display: 'block', marginBottom: 5, fontWeight: 600 }}>Phone</label>
                 <input 
                   type="text" 
                   placeholder="+1-555-0101" 
@@ -147,7 +148,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
           )}
 
           <div>
-            <label style={{ fontSize: '0.8rem', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Campus Email</label>
+            <label style={{ fontSize: '0.82rem', color: '#475569', display: 'block', marginBottom: 5, fontWeight: 600 }}>Campus Email</label>
             <input 
               type="email" 
               placeholder="e.g. alex@campus.edu" 
@@ -159,7 +160,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
           </div>
 
           <div>
-            <label style={{ fontSize: '0.8rem', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Password</label>
+            <label style={{ fontSize: '0.82rem', color: '#475569', display: 'block', marginBottom: 5, fontWeight: 600 }}>Password</label>
             <input 
               type="password" 
               placeholder="••••••••" 
@@ -175,11 +176,11 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
           </button>
         </form>
 
-        <div style={{ marginTop: 16, textAlign: 'center', fontSize: '0.85rem', color: '#94a3b8' }}>
+        <div style={{ marginTop: 16, textAlign: 'center', fontSize: '0.85rem', color: '#64748b' }}>
           {isRegister ? 'Already registered?' : "Don't have an account yet?"}{' '}
           <button 
             onClick={() => setIsRegister(!isRegister)}
-            style={{ background: 'transparent', color: '#818cf8', fontWeight: 600, cursor: 'pointer' }}
+            style={{ background: 'transparent', color: '#4f46e5', fontWeight: 700, cursor: 'pointer', border: 'none' }}
           >
             {isRegister ? 'Sign in' : 'Create Student Account'}
           </button>
@@ -189,22 +190,22 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
         <div style={{
           marginTop: 24,
           paddingTop: 16,
-          borderTop: '1px solid rgba(255, 255, 255, 0.08)'
+          borderTop: '1px solid rgba(226, 232, 240, 0.9)'
         }}>
-          <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: '#64748b', fontWeight: 700, marginBottom: 8 }}>
+          <div style={{ fontSize: '0.74rem', textTransform: 'uppercase', color: '#64748b', fontWeight: 700, marginBottom: 8, letterSpacing: '0.04em' }}>
             Quick 1-Click Login for Faculty / Viva:
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             <button 
               className="btn btn-secondary" 
-              style={{ fontSize: '0.75rem', padding: '6px' }}
+              style={{ fontSize: '0.78rem', padding: '8px' }}
               onClick={() => handleQuickSelect('admin@campus.edu')}
             >
               👑 Admin (Dr. Sharma)
             </button>
             <button 
               className="btn btn-secondary" 
-              style={{ fontSize: '0.75rem', padding: '6px' }}
+              style={{ fontSize: '0.78rem', padding: '8px' }}
               onClick={() => handleQuickSelect('alex@campus.edu')}
             >
               🎓 Student (Alex Rivera)

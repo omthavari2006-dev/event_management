@@ -38,6 +38,7 @@ export const api = {
     if (params.status) query.append('status', params.status);
     if (params.type) query.append('type', params.type);
     if (params.search) query.append('search', params.search);
+    if (params.clubId) query.append('clubId', params.clubId);
     return request(`/events?${query.toString()}`);
   },
   getEvent: (eventId) => request(`/events/${eventId}`),

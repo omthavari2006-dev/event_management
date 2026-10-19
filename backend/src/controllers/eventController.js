@@ -2,8 +2,8 @@ const eventService = require('../services/eventService');
 const asyncHandler = require('../utils/asyncHandler');
 
 const getEvents = asyncHandler(async (req, res) => {
-  const { status, type, search, limit, skip } = req.query;
-  const events = await eventService.listEvents({ status, type, search, limit, skip });
+  const { status, type, search, clubId, limit, skip } = req.query;
+  const events = await eventService.listEvents({ status, type, search, clubId, limit, skip });
   res.status(200).json({ success: true, count: events.length, events });
 });
 
@@ -20,6 +20,7 @@ const createEvent = asyncHandler(async (req, res) => {
     name,
     type,
     description,
+    requirements,
     venue,
     startDateTime,
     endDateTime,
@@ -37,6 +38,7 @@ const createEvent = asyncHandler(async (req, res) => {
     name,
     type,
     description,
+    requirements: requirements || '',
     venue,
     startDateTime,
     endDateTime,

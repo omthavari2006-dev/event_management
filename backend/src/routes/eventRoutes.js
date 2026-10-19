@@ -4,7 +4,7 @@ const eventController = require('../controllers/eventController');
 const { authenticate, optionalAuth } = require('../middleware/auth');
 const { requireAdmin, requireClubOrganizer } = require('../middleware/roles');
 
-router.get('/', eventController.getEvents);
+router.get('/', optionalAuth, eventController.getEvents);
 router.get('/clash-check', eventController.checkClash);
 router.get('/:eventId', optionalAuth, eventController.getEvent);
 router.post('/', authenticate, requireClubOrganizer, eventController.createEvent);

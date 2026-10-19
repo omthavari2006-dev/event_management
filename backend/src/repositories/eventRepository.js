@@ -2,24 +2,44 @@ const { executeQuery, executeWriteTransaction } = require('../config/db');
 const { recordsToObjects } = require('../utils/neo4jUtils');
 
 class EventRepository {
-  async getAllEvents({ status, type, search, limit = 50, skip = 0 }) {
-    // If full-text search query is provided
+  async getAllEvents({ status, type, search, clubId, limit = 50, skip = 0 }) {
+    // Determine status query clause:
+    // If status is not provided (or 'public'), default to only Approved and Completed events so students never see Pending
+    let statusFilter = '';
+    if (!status || status === 'public') {
+      statusFilter = "e.status IN ['Approved', 'Completed']";
+    } else if (status === 'All') {
+      statusFilter = "true";
+    } else {
+      statusFilter = "e.status = $status";
+    }
+
     let cypher = `
       MATCH (e:Event)
-      WHERE ($status IS NULL OR e.status = $status)
+      WHERE ${statusFilter}
         AND ($type IS NULL OR e.type = $type)
     `;
 
     if (search && search.trim()) {
       cypher += `
         AND (toLower(e.name) CONTAINS toLower($search) 
-             OR toLower(e.description) CONTAINS toLower($search) 
+             OR toLower(coalesce(e.description, '')) CONTAINS toLower($search) 
+             OR toLower(coalesce(e.requirements, '')) CONTAINS toLower($search) 
              OR toLower(e.venue) CONTAINS toLower($search))
       `;
     }
 
+    if (clubId) {
+      cypher += `
+        MATCH (c:Club {clubId: $clubId})-[:ORGANIZES]->(e)
+      `;
+    } else {
+      cypher += `
+        OPTIONAL MATCH (c:Club)-[:ORGANIZES]->(e)
+      `;
+    }
+
     cypher += `
-      OPTIONAL MATCH (c:Club)-[:ORGANIZES]->(e)
       OPTIONAL MATCH (regStudent:Student)-[r:REGISTERED_FOR {status: 'Registered'}]->(e)
       OPTIONAL MATCH (waitStudent:Student)-[w:REGISTERED_FOR {status: 'Waitlisted'}]->(e)
       OPTIONAL MATCH (attStudent:Student)-[:ATTENDED]->(e)
@@ -31,6 +51,7 @@ class EventRepository {
              e.name AS name,
              e.type AS type,
              e.description AS description,
+             e.requirements AS requirements,
              e.venue AS venue,
              e.startDateTime AS startDateTime,
              e.endDateTime AS endDateTime,
@@ -38,6 +59,7 @@ class EventRepository {
              e.maxParticipants AS maxParticipants,
              e.maxTeamSize AS maxTeamSize,
              e.status AS status,
+             e.rejectionReason AS rejectionReason,
              e.createdTimestamp AS createdTimestamp,
              c.clubId AS clubId,
              c.name AS clubName,
@@ -54,6 +76,7 @@ class EventRepository {
       status: status || null,
       type: type || null,
       search: search || null,
+      clubId: clubId || null,
       skip: Number(skip),
       limit: Number(limit)
     });
@@ -89,6 +112,7 @@ class EventRepository {
              e.name AS name,
              e.type AS type,
              e.description AS description,
+             e.requirements AS requirements,
              e.venue AS venue,
              e.startDateTime AS startDateTime,
              e.endDateTime AS endDateTime,
@@ -96,6 +120,7 @@ class EventRepository {
              e.maxParticipants AS maxParticipants,
              e.maxTeamSize AS maxTeamSize,
              e.status AS status,
+             e.rejectionReason AS rejectionReason,
              e.createdTimestamp AS createdTimestamp,
              c.clubId AS clubId,
              c.name AS clubName,
@@ -147,6 +172,7 @@ class EventRepository {
     name,
     type,
     description,
+    requirements,
     venue,
     startDateTime,
     endDateTime,
@@ -161,6 +187,7 @@ class EventRepository {
         name: $name,
         type: $type,
         description: $description,
+        requirements: $requirements,
         venue: $venue,
         startDateTime: $startDateTime,
         endDateTime: $endDateTime,
@@ -179,6 +206,7 @@ class EventRepository {
       name,
       type,
       description,
+      requirements: requirements || '',
       venue,
       startDateTime,
       endDateTime,
@@ -199,6 +227,28 @@ class EventRepository {
     `;
     const result = await executeQuery(cypher, { eventId, adminId });
     return recordsToObjects(result.records)[0] || null;
+  }
+
+  async notifyOrganizers(eventId, title, message) {
+    try {
+      const cypher = `
+        MATCH (e:Event {eventId: $eventId})<-[:ORGANIZES]-(c:Club)
+        MATCH (s:Student)-[m:MEMBER_OF_CLUB|PRESIDENT_OF]->(c)
+        WHERE m.role IN ['President', 'Organizer'] OR type(m) = 'PRESIDENT_OF'
+        CREATE (n:Notification {
+          notificationId: 'notif-' + toString(datetime().epochMillis) + '-' + s.studentId,
+          title: $title,
+          message: $message,
+          status: 'Unread',
+          createdTimestamp: toString(datetime())
+        })
+        MERGE (s)-[:RECEIVED]->(n)
+        RETURN count(n) AS notifsSent
+      `;
+      await executeQuery(cypher, { eventId, title, message });
+    } catch (e) {
+      console.warn('Could not send notification to organizers:', e.message);
+    }
   }
 
   async rejectEvent(eventId, reason = 'Rejected by Admin') {

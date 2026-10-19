@@ -19,7 +19,7 @@ export default function EventsPage({ user, onSelectEvent, onOpenAuth }) {
     try {
       setLoading(true);
       const params = {
-        status: selectedStatus === 'All' ? null : selectedStatus,
+        status: selectedStatus === 'All' ? 'public' : selectedStatus,
         type: selectedType === 'All' ? null : selectedType,
         search: search.trim() || null
       };
@@ -54,48 +54,50 @@ export default function EventsPage({ user, onSelectEvent, onOpenAuth }) {
     <div style={{ maxWidth: 1400, margin: '0 auto', padding: '32px 24px' }}>
       {/* Hero Showcase Banner */}
       <div style={{
-        background: 'linear-gradient(135deg, rgba(30, 41, 67, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
-        borderRadius: 24,
+        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(240, 244, 255, 0.92) 100%)',
+        border: '1.5px solid rgba(255, 255, 255, 0.95)',
+        borderRadius: 26,
         padding: '48px 40px',
         marginBottom: 40,
         position: 'relative',
         overflow: 'hidden',
-        boxShadow: '0 20px 50px rgba(0, 0, 0, 0.4)'
+        boxShadow: '0 20px 48px -12px rgba(99, 102, 241, 0.12), 0 8px 16px -4px rgba(100, 116, 139, 0.06), inset 0 1px 2px #ffffff',
+        backdropFilter: 'blur(20px)'
       }}>
         <div style={{
           position: 'absolute',
           top: -100,
           right: -100,
-          width: 350,
-          height: 350,
+          width: 380,
+          height: 380,
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%)',
           pointerEvents: 'none'
         }} />
 
-        <div style={{ maxWidth: 720 }}>
+        <div style={{ maxWidth: 740 }}>
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: 8,
-            padding: '6px 14px',
+            padding: '7px 16px',
             borderRadius: 20,
-            background: 'rgba(99, 102, 241, 0.15)',
-            border: '1px solid rgba(99, 102, 241, 0.3)',
-            color: '#a5b4fc',
-            fontSize: '0.82rem',
+            background: 'rgba(99, 102, 241, 0.08)',
+            border: '1px solid rgba(99, 102, 241, 0.25)',
+            color: '#4f46e5',
+            fontSize: '0.84rem',
             fontWeight: 700,
-            marginBottom: 16
+            marginBottom: 16,
+            boxShadow: '0 2px 8px rgba(99, 102, 241, 0.08)'
           }}>
             <Sparkles size={14} /> Powered by Neo4j Graph DBMS & Real-time Traversals
           </div>
 
-          <h1 style={{ fontSize: '2.8rem', lineHeight: 1.15, marginBottom: 16, letterSpacing: '-0.03em' }}>
+          <h1 style={{ fontSize: '2.8rem', lineHeight: 1.15, marginBottom: 16, letterSpacing: '-0.03em', color: '#0f172a', fontWeight: 800 }}>
             Discover, Connect & Conquer Campus Events
           </h1>
 
-          <p style={{ fontSize: '1.05rem', color: '#94a3b8', lineHeight: 1.6, marginBottom: 28 }}>
+          <p style={{ fontSize: '1.05rem', color: '#475569', lineHeight: 1.6, marginBottom: 28 }}>
             Experience lightning-fast registration with concurrency locks, automated waitlists, 
             graph-powered recommendations, team formations, and verifiable digital certificates.
           </p>
@@ -123,9 +125,9 @@ export default function EventsPage({ user, onSelectEvent, onOpenAuth }) {
       {user && user.role === 'Student' && recommendations.length > 0 && (
         <div style={{ marginBottom: 40 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-            <Sparkles size={20} color="#818cf8" />
-            <h2 style={{ fontSize: '1.4rem' }}>Recommended for You (Collaborative Graph Traversal)</h2>
-            <span style={{ fontSize: '0.78rem', color: '#94a3b8', background: 'rgba(99, 102, 241, 0.1)', padding: '3px 8px', borderRadius: 12 }}>
+            <Sparkles size={20} color="#4f46e5" />
+            <h2 style={{ fontSize: '1.4rem', color: '#0f172a', fontWeight: 700 }}>Recommended for You (Collaborative Graph Traversal)</h2>
+            <span style={{ fontSize: '0.78rem', color: '#4f46e5', background: 'rgba(99, 102, 241, 0.1)', padding: '4px 10px', borderRadius: 12, fontWeight: 600 }}>
               Based on peers who attended your events
             </span>
           </div>
@@ -141,25 +143,26 @@ export default function EventsPage({ user, onSelectEvent, onOpenAuth }) {
                 className="card-interactive"
                 onClick={() => onSelectEvent(rec.eventId)}
                 style={{
-                  padding: 20,
+                  padding: 22,
                   cursor: 'pointer',
-                  border: '1px solid rgba(99, 102, 241, 0.35)',
-                  background: 'linear-gradient(135deg, rgba(23, 31, 51, 0.9) 0%, rgba(30, 41, 67, 0.7) 100%)'
+                  border: '1.5px solid rgba(199, 210, 254, 0.85)',
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(238, 242, 255, 0.9) 100%)',
+                  boxShadow: '0 12px 28px -6px rgba(99, 102, 241, 0.12), inset 0 1px 1px #fff'
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                   <span className="badge badge-purple">{rec.type}</span>
-                  <span style={{ fontSize: '0.75rem', color: '#38bdf8', fontWeight: 600 }}>
+                  <span style={{ fontSize: '0.78rem', color: '#0284c7', fontWeight: 700 }}>
                     🔥 {rec.peerScore} peer{rec.peerScore > 1 ? 's' : ''} registered
                   </span>
                 </div>
-                <h3 style={{ fontSize: '1.15rem', marginBottom: 8, color: '#f8fafc' }}>{rec.name}</h3>
-                <div style={{ fontSize: '0.82rem', color: '#94a3b8', marginBottom: 14 }}>
-                  Hosted by <strong style={{ color: '#cbd5e1' }}>{rec.clubName}</strong>
+                <h3 style={{ fontSize: '1.18rem', marginBottom: 8, color: '#0f172a', fontWeight: 700 }}>{rec.name}</h3>
+                <div style={{ fontSize: '0.84rem', color: '#64748b', marginBottom: 14 }}>
+                  Hosted by <strong style={{ color: '#334155' }}>{rec.clubName}</strong>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.82rem', color: '#64748b' }}>
                   <span>{new Date(rec.startDateTime).toLocaleDateString()}</span>
-                  <span style={{ color: '#818cf8', display: 'flex', alignItems: 'center', gap: 4, fontWeight: 600 }}>
+                  <span style={{ color: '#4f46e5', display: 'flex', alignItems: 'center', gap: 4, fontWeight: 700 }}>
                     View & Register <ArrowRight size={14} />
                   </span>
                 </div>
@@ -185,14 +188,16 @@ export default function EventsPage({ user, onSelectEvent, onOpenAuth }) {
               key={cat}
               onClick={() => setSelectedType(cat)}
               style={{
-                padding: '8px 16px',
+                padding: '9px 18px',
                 borderRadius: 20,
-                fontSize: '0.85rem',
+                fontSize: '0.86rem',
                 fontWeight: 600,
-                background: selectedType === cat ? 'var(--accent-gradient)' : 'rgba(255, 255, 255, 0.05)',
-                color: selectedType === cat ? '#fff' : '#94a3b8',
-                border: `1px solid ${selectedType === cat ? 'transparent' : 'rgba(255, 255, 255, 0.08)'}`,
-                boxShadow: selectedType === cat ? '0 4px 14px rgba(99, 102, 241, 0.3)' : 'none'
+                background: selectedType === cat ? 'var(--accent-gradient)' : 'rgba(255, 255, 255, 0.85)',
+                color: selectedType === cat ? '#ffffff' : '#475569',
+                border: `1.5px solid ${selectedType === cat ? 'transparent' : 'rgba(226, 232, 240, 0.9)'}`,
+                boxShadow: selectedType === cat ? '0 6px 18px rgba(99, 102, 241, 0.35)' : '0 2px 6px rgba(100, 116, 139, 0.05)',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
               }}
             >
               {cat}
@@ -202,35 +207,36 @@ export default function EventsPage({ user, onSelectEvent, onOpenAuth }) {
 
         {/* Status Filter */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: '0.82rem', color: '#64748b' }}>Status:</span>
+          <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>Status:</span>
           <select 
             value={selectedStatus} 
             onChange={(e) => setSelectedStatus(e.target.value)}
-            style={{ fontSize: '0.84rem', padding: '6px 12px' }}
+            style={{ fontSize: '0.86rem', padding: '7px 14px', borderRadius: 10 }}
           >
             <option value="Approved">Upcoming & Active</option>
             <option value="Completed">Past & Completed</option>
-            <option value="All">All Statuses</option>
+            <option value="All">All Active & Past</option>
           </select>
         </div>
       </div>
 
       {/* Events Grid */}
       {loading ? (
-        <div style={{ padding: 80, textAlign: 'center', color: '#94a3b8' }}>
+        <div style={{ padding: 80, textAlign: 'center', color: '#64748b', fontSize: '1.05rem', fontWeight: 500 }}>
           Querying Neo4j Graph for campus events...
         </div>
       ) : events.length === 0 ? (
         <div style={{
           textAlign: 'center',
           padding: '80px 20px',
-          background: 'rgba(255, 255, 255, 0.02)',
-          borderRadius: 20,
-          border: '1px solid rgba(255, 255, 255, 0.06)'
+          background: 'rgba(255, 255, 255, 0.75)',
+          borderRadius: 22,
+          border: '1.5px solid rgba(226, 232, 240, 0.9)',
+          boxShadow: '0 10px 30px rgba(100, 116, 139, 0.06)'
         }}>
-          <Compass size={48} style={{ margin: '0 auto 16px', opacity: 0.3 }} />
-          <h3 style={{ fontSize: '1.25rem', marginBottom: 8 }}>No events found</h3>
-          <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Try clearing your filters or search terms.</p>
+          <Compass size={48} style={{ margin: '0 auto 16px', color: '#94a3b8' }} />
+          <h3 style={{ fontSize: '1.3rem', marginBottom: 8, color: '#0f172a', fontWeight: 700 }}>No events found</h3>
+          <p style={{ color: '#64748b', fontSize: '0.92rem' }}>Try clearing your filters or search terms.</p>
         </div>
       ) : (
         <div style={{
@@ -266,14 +272,14 @@ export default function EventsPage({ user, onSelectEvent, onOpenAuth }) {
                 </div>
 
                 {/* Event Title & Description */}
-                <h3 style={{ fontSize: '1.25rem', marginBottom: 8, color: '#f8fafc', lineHeight: 1.3 }}>
+                <h3 style={{ fontSize: '1.25rem', marginBottom: 8, color: '#0f172a', lineHeight: 1.3, fontWeight: 700 }}>
                   {evt.name}
                 </h3>
                 <p style={{
-                  fontSize: '0.85rem',
-                  color: '#94a3b8',
-                  lineHeight: 1.5,
-                  marginBottom: 16,
+                  fontSize: '0.88rem',
+                  color: '#475569',
+                  lineHeight: 1.55,
+                  marginBottom: 12,
                   display: '-webkit-box',
                   WebkitLineClamp: 2,
                   WebkitBoxOrient: 'vertical',
@@ -282,14 +288,32 @@ export default function EventsPage({ user, onSelectEvent, onOpenAuth }) {
                   {evt.description}
                 </p>
 
+                {/* Event Requirements Pill */}
+                {evt.requirements && (
+                  <div style={{
+                    fontSize: '0.8rem',
+                    color: '#6b21a8',
+                    background: 'rgba(168, 85, 247, 0.08)',
+                    border: '1px solid rgba(168, 85, 247, 0.25)',
+                    padding: '6px 12px',
+                    borderRadius: 10,
+                    marginBottom: 14,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6
+                  }}>
+                    <span>📋 <strong>Requirements:</strong> {evt.requirements.length > 50 ? evt.requirements.substring(0, 50) + '...' : evt.requirements}</span>
+                  </div>
+                )}
+
                 {/* Event Venue & Date */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: '0.82rem', color: '#cbd5e1', marginBottom: 18 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: '0.84rem', color: '#334155', marginBottom: 18 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <MapPin size={15} color="#818cf8" />
-                    <span>{evt.venue}</span>
+                    <MapPin size={15} color="#4f46e5" />
+                    <span style={{ fontWeight: 500 }}>{evt.venue}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Calendar size={15} color="#38bdf8" />
+                    <Calendar size={15} color="#0284c7" />
                     <span>
                       {new Date(evt.startDateTime).toLocaleDateString()} at {new Date(evt.startDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
@@ -297,17 +321,17 @@ export default function EventsPage({ user, onSelectEvent, onOpenAuth }) {
                 </div>
 
                 {/* Seats & Capacity Meter */}
-                <div style={{ marginTop: 'auto', paddingTop: 14, borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: 6 }}>
-                    <span style={{ color: '#94a3b8' }}>
+                <div style={{ marginTop: 'auto', paddingTop: 14, borderTop: '1px solid rgba(226, 232, 240, 0.8)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', marginBottom: 6 }}>
+                    <span style={{ color: '#64748b', fontWeight: 500 }}>
                       {evt.registeredCount} / {evt.maxParticipants} Registered
                     </span>
-                    <span style={{ fontWeight: 700, color: isFull ? '#f59e0b' : '#34d399' }}>
+                    <span style={{ fontWeight: 700, color: isFull ? '#d97706' : '#059669' }}>
                       {isFull ? 'Waitlist Open' : `${evt.seatsLeft} Seats Left`}
                     </span>
                   </div>
 
-                  <div style={{ width: '100%', height: 6, borderRadius: 3, background: 'rgba(255, 255, 255, 0.08)', overflow: 'hidden' }}>
+                  <div style={{ width: '100%', height: 7, borderRadius: 4, background: 'rgba(226, 232, 240, 0.9)', overflow: 'hidden' }}>
                     <div style={{
                       width: `${seatsPercent}%`,
                       height: '100%',

@@ -38,28 +38,29 @@ export default function CertificatesPage({ user, onNavigateToVerify }) {
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
         <div>
-          <h1 style={{ fontSize: '2rem', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Award size={28} color="#f59e0b" /> Official Merits & Certificates
+          <h1 style={{ fontSize: '2rem', display: 'flex', alignItems: 'center', gap: 10, color: '#0f172a', fontWeight: 800 }}>
+            <Award size={28} color="#d97706" /> Official Merits & Certificates
           </h1>
-          <p style={{ color: '#94a3b8', fontSize: '0.95rem', marginTop: 4 }}>
+          <p style={{ color: '#64748b', fontSize: '0.96rem', marginTop: 4 }}>
             Verifiable credentials issued directly through immutable graph relationships.
           </p>
         </div>
       </div>
 
       {loading ? (
-        <div style={{ padding: 60, textAlign: 'center', color: '#94a3b8' }}>Loading certificates...</div>
+        <div style={{ padding: 60, textAlign: 'center', color: '#64748b', fontSize: '0.96rem' }}>Loading certificates...</div>
       ) : certificates.length === 0 ? (
         <div style={{
           padding: '60px 20px',
           textAlign: 'center',
-          background: 'rgba(255, 255, 255, 0.02)',
-          borderRadius: 16,
-          border: '1px solid rgba(255, 255, 255, 0.06)'
+          background: 'rgba(255, 255, 255, 0.75)',
+          borderRadius: 20,
+          border: '1.5px solid rgba(226, 232, 240, 0.9)',
+          boxShadow: '0 10px 30px rgba(100, 116, 139, 0.05)'
         }}>
-          <Award size={48} style={{ margin: '0 auto 12px', opacity: 0.3 }} />
-          <h3>No certificates issued yet</h3>
-          <p style={{ color: '#64748b', fontSize: '0.9rem', marginTop: 4 }}>
+          <Award size={48} style={{ margin: '0 auto 12px', color: '#94a3b8' }} />
+          <h3 style={{ fontSize: '1.25rem', color: '#0f172a', fontWeight: 700 }}>No certificates issued yet</h3>
+          <p style={{ color: '#64748b', fontSize: '0.92rem', marginTop: 4 }}>
             Attend events and win competitions to earn verified participation and excellence credentials!
           </p>
         </div>
@@ -78,36 +79,40 @@ export default function CertificatesPage({ user, onNavigateToVerify }) {
                 className="card-interactive"
                 style={{
                   padding: 24,
-                  border: isWinner ? '1px solid rgba(245, 158, 11, 0.35)' : '1px solid rgba(59, 130, 246, 0.35)',
+                  border: isWinner ? '2px solid rgba(245, 158, 11, 0.45)' : '1.5px solid rgba(199, 210, 254, 0.9)',
                   background: isWinner 
-                    ? 'linear-gradient(135deg, rgba(30, 25, 15, 0.8) 0%, rgba(20, 24, 38, 0.8) 100%)'
-                    : 'linear-gradient(135deg, rgba(18, 28, 50, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%)'
+                    ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(254, 243, 199, 0.95) 100%)'
+                    : 'linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(238, 242, 255, 0.95) 100%)',
+                  boxShadow: isWinner 
+                    ? '0 12px 28px -6px rgba(245, 158, 11, 0.18), inset 0 1px 1px #fff' 
+                    : '0 12px 28px -6px rgba(99, 102, 241, 0.12), inset 0 1px 1px #fff'
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                   <span className={`badge ${isWinner ? 'badge-warning' : 'badge-info'}`} style={{ fontSize: '0.82rem' }}>
                     {isWinner ? '🏆 Winner Certificate' : '📜 Participation Certificate'}
                   </span>
-                  <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                  <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 600 }}>
                     {cert.issueDate}
                   </span>
                 </div>
 
-                <h3 style={{ fontSize: '1.25rem', marginBottom: 6, color: '#fff' }}>
+                <h3 style={{ fontSize: '1.25rem', marginBottom: 6, color: '#0f172a', fontWeight: 800 }}>
                   {cert.eventName}
                 </h3>
-                <div style={{ fontSize: '0.84rem', color: '#94a3b8', marginBottom: 16 }}>
-                  Organized by <strong style={{ color: '#cbd5e1' }}>{cert.clubName}</strong>
+                <div style={{ fontSize: '0.86rem', color: '#475569', marginBottom: 16 }}>
+                  Organized by <strong style={{ color: '#0f172a' }}>{cert.clubName}</strong>
                 </div>
 
                 {isWinner && (
                   <div style={{
-                    padding: '8px 12px',
-                    borderRadius: 8,
-                    background: 'rgba(245, 158, 11, 0.1)',
-                    border: '1px solid rgba(245, 158, 11, 0.25)',
-                    fontSize: '0.85rem',
-                    color: '#fcd34d',
+                    padding: '8px 14px',
+                    borderRadius: 10,
+                    background: 'rgba(245, 158, 11, 0.15)',
+                    border: '1px solid rgba(245, 158, 11, 0.3)',
+                    fontSize: '0.88rem',
+                    color: '#92400e',
+                    fontWeight: 700,
                     marginBottom: 16
                   }}>
                     Position #{cert.wonPosition} • {cert.wonPrize}
@@ -115,23 +120,24 @@ export default function CertificatesPage({ user, onNavigateToVerify }) {
                 )}
 
                 <div style={{
-                  background: 'rgba(0, 0, 0, 0.3)',
-                  padding: '8px 12px',
-                  borderRadius: 8,
-                  fontSize: '0.78rem',
+                  background: 'rgba(241, 245, 249, 0.85)',
+                  padding: '10px 14px',
+                  borderRadius: 10,
+                  fontSize: '0.8rem',
                   fontFamily: 'monospace',
-                  color: '#94a3b8',
+                  color: '#475569',
                   marginBottom: 18,
                   display: 'flex',
                   justifyContent: 'space-between',
-                  alignItems: 'center'
+                  alignItems: 'center',
+                  border: '1px solid rgba(226, 232, 240, 0.9)'
                 }}>
-                  <span>Code: <strong>{cert.verificationCode}</strong></span>
+                  <span>Code: <strong style={{ color: '#0f172a' }}>{cert.verificationCode}</strong></span>
                   <button 
                     onClick={() => onNavigateToVerify(cert.verificationCode)}
-                    style={{ background: 'transparent', color: '#38bdf8', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                    style={{ background: 'transparent', color: '#0284c7', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, border: 'none', fontWeight: 700 }}
                   >
-                    Verify <ExternalLink size={12} />
+                    Verify <ExternalLink size={13} />
                   </button>
                 </div>
 
@@ -141,7 +147,7 @@ export default function CertificatesPage({ user, onNavigateToVerify }) {
                     target="_blank"
                     rel="noreferrer"
                     className="btn btn-primary"
-                    style={{ flex: 1, padding: '10px' }}
+                    style={{ flex: 1, padding: '10px', fontSize: '0.88rem' }}
                   >
                     <Download size={16} /> Download PDF
                   </a>

@@ -55,49 +55,50 @@ export default function TicketModal({ event, user, onClose }) {
         {/* QR Code Center */}
         <div style={{
           padding: '30px 24px',
-          background: '#0f172a',
+          background: 'rgba(248, 250, 252, 0.98)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          borderBottom: '2px dashed rgba(255, 255, 255, 0.15)',
+          borderBottom: '2px dashed rgba(203, 213, 225, 0.9)',
           position: 'relative'
         }}>
           <div style={{
             background: '#fff',
             padding: 16,
-            borderRadius: 16,
-            boxShadow: '0 8px 25px rgba(0, 0, 0, 0.4)'
+            borderRadius: 18,
+            boxShadow: '0 10px 28px rgba(100, 116, 139, 0.15)',
+            border: '1.5px solid rgba(226, 232, 240, 0.9)'
           }}>
             <QRCodeSVG value={ticketData} size={180} level="M" />
           </div>
-          <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: 12 }}>
+          <div style={{ fontSize: '0.82rem', color: '#64748b', marginTop: 14, fontWeight: 500 }}>
             Present this QR Code to Organizer at Gate
           </div>
         </div>
 
         {/* Ticket Metadata */}
-        <div style={{ padding: '24px', background: '#111827' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 16 }}>
+        <div style={{ padding: '24px', background: 'rgba(255, 255, 255, 0.98)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 18 }}>
             <div>
-              <div style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Attendee</div>
-              <div style={{ fontSize: '0.92rem', fontWeight: 700, color: '#f8fafc' }}>{user.name}</div>
-              <div style={{ fontSize: '0.75rem', color: '#818cf8' }}>ID: {user.id}</div>
+              <div style={{ fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Attendee</div>
+              <div style={{ fontSize: '0.94rem', fontWeight: 700, color: '#0f172a' }}>{user.name}</div>
+              <div style={{ fontSize: '0.76rem', color: '#4f46e5', fontWeight: 600 }}>ID: {user.id}</div>
             </div>
 
             <div>
-              <div style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Department</div>
-              <div style={{ fontSize: '0.88rem', fontWeight: 600, color: '#cbd5e1' }}>{user.department || 'Campus Student'}</div>
+              <div style={{ fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Department</div>
+              <div style={{ fontSize: '0.88rem', fontWeight: 600, color: '#334155' }}>{user.department || 'Campus Student'}</div>
             </div>
 
             <div>
-              <div style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Venue</div>
-              <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#cbd5e1' }}>{event.venue}</div>
+              <div style={{ fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Venue</div>
+              <div style={{ fontSize: '0.88rem', fontWeight: 600, color: '#334155' }}>{event.venue}</div>
             </div>
 
             <div>
-              <div style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase' }}>Date & Time</div>
-              <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#cbd5e1' }}>
+              <div style={{ fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Date & Time</div>
+              <div style={{ fontSize: '0.88rem', fontWeight: 600, color: '#334155' }}>
                 {new Date(event.startDateTime).toLocaleDateString()}
               </div>
             </div>
@@ -105,7 +106,7 @@ export default function TicketModal({ event, user, onClose }) {
 
           <button 
             className="btn btn-secondary" 
-            style={{ width: '100%' }}
+            style={{ width: '100%', padding: '12px', fontSize: '0.92rem' }}
             onClick={() => window.print()}
           >
             Save or Print Pass

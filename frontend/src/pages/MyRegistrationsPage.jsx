@@ -56,10 +56,10 @@ export default function MyRegistrationsPage({ user, onViewTicket, onOpenEvent })
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
         <div>
-          <h1 style={{ fontSize: '2rem', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Ticket size={28} color="#818cf8" /> My Campus Passes & Registrations
+          <h1 style={{ fontSize: '2rem', display: 'flex', alignItems: 'center', gap: 10, color: '#0f172a', fontWeight: 800 }}>
+            <Ticket size={28} color="#4f46e5" /> My Campus Passes & Registrations
           </h1>
-          <p style={{ color: '#94a3b8', fontSize: '0.95rem', marginTop: 4 }}>
+          <p style={{ color: '#64748b', fontSize: '0.96rem', marginTop: 4 }}>
             Manage your registered events, access digital entry QR tickets, and check attendance records.
           </p>
         </div>
@@ -67,11 +67,12 @@ export default function MyRegistrationsPage({ user, onViewTicket, onOpenEvent })
 
       {message && (
         <div style={{
-          padding: '12px 16px',
-          borderRadius: 10,
-          background: 'rgba(59, 130, 246, 0.15)',
-          border: '1px solid rgba(59, 130, 246, 0.3)',
-          color: '#93c5fd',
+          padding: '12px 18px',
+          borderRadius: 12,
+          background: 'rgba(59, 130, 246, 0.1)',
+          border: '1.5px solid rgba(59, 130, 246, 0.3)',
+          color: '#1e40af',
+          fontWeight: 600,
           marginBottom: 20
         }}>
           {message}
@@ -79,18 +80,19 @@ export default function MyRegistrationsPage({ user, onViewTicket, onOpenEvent })
       )}
 
       {loading ? (
-        <div style={{ padding: 60, textAlign: 'center', color: '#94a3b8' }}>Loading your passes...</div>
+        <div style={{ padding: 60, textAlign: 'center', color: '#64748b', fontSize: '0.96rem' }}>Loading your passes...</div>
       ) : registrations.length === 0 ? (
         <div style={{
           padding: '60px 20px',
           textAlign: 'center',
-          background: 'rgba(255, 255, 255, 0.02)',
-          borderRadius: 16,
-          border: '1px solid rgba(255, 255, 255, 0.06)'
+          background: 'rgba(255, 255, 255, 0.75)',
+          borderRadius: 20,
+          border: '1.5px solid rgba(226, 232, 240, 0.9)',
+          boxShadow: '0 10px 30px rgba(100, 116, 139, 0.05)'
         }}>
-          <Ticket size={48} style={{ margin: '0 auto 12px', opacity: 0.3 }} />
-          <h3>No event registrations yet</h3>
-          <p style={{ color: '#64748b', fontSize: '0.9rem', marginTop: 4 }}>
+          <Ticket size={48} style={{ margin: '0 auto 12px', color: '#94a3b8' }} />
+          <h3 style={{ fontSize: '1.25rem', color: '#0f172a', fontWeight: 700 }}>No event registrations yet</h3>
+          <p style={{ color: '#64748b', fontSize: '0.92rem', marginTop: 4 }}>
             Discover exciting hackathons, workshops, and seminars in the Discover tab!
           </p>
         </div>
@@ -100,16 +102,17 @@ export default function MyRegistrationsPage({ user, onViewTicket, onOpenEvent })
             <div 
               key={reg.registrationId}
               style={{
-                background: 'rgba(23, 31, 51, 0.75)',
-                backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                borderRadius: 16,
-                padding: '20px 24px',
+                background: 'rgba(255, 255, 255, 0.9)',
+                backdropFilter: 'blur(20px)',
+                border: '1.5px solid rgba(226, 232, 240, 0.9)',
+                borderRadius: 18,
+                padding: '22px 28px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 flexWrap: 'wrap',
-                gap: 20
+                gap: 20,
+                boxShadow: '0 10px 28px -6px rgba(100, 116, 139, 0.08), inset 0 1px 1px #ffffff'
               }}
             >
               <div>
@@ -137,20 +140,20 @@ export default function MyRegistrationsPage({ user, onViewTicket, onOpenEvent })
 
                 <h3 
                   onClick={() => onOpenEvent(reg.eventId)}
-                  style={{ fontSize: '1.3rem', cursor: 'pointer', color: '#f8fafc' }}
+                  style={{ fontSize: '1.3rem', cursor: 'pointer', color: '#0f172a', fontWeight: 800 }}
                 >
                   {reg.eventName}
                 </h3>
 
-                <div style={{ display: 'flex', gap: 16, fontSize: '0.84rem', color: '#94a3b8', marginTop: 8 }}>
+                <div style={{ display: 'flex', gap: 16, fontSize: '0.86rem', color: '#64748b', marginTop: 8 }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <MapPin size={14} color="#818cf8" /> {reg.venue}
+                    <MapPin size={14} color="#4f46e5" /> {reg.venue}
                   </span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <Calendar size={14} color="#38bdf8" /> {new Date(reg.startDateTime).toLocaleDateString()}
+                    <Calendar size={14} color="#0284c7" /> {new Date(reg.startDateTime).toLocaleDateString()}
                   </span>
                   {reg.teamName && (
-                    <span style={{ color: '#c084fc' }}>Team: <strong>{reg.teamName}</strong></span>
+                    <span style={{ color: '#7e22ce', fontWeight: 600 }}>Team: <strong>{reg.teamName}</strong></span>
                   )}
                 </div>
               </div>
@@ -161,7 +164,7 @@ export default function MyRegistrationsPage({ user, onViewTicket, onOpenEvent })
                   <button 
                     className="btn btn-primary"
                     onClick={() => onViewTicket(reg)}
-                    style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    style={{ padding: '9px 18px', fontSize: '0.88rem' }}
                   >
                     <QrCode size={16} /> Digital Pass
                   </button>
@@ -172,7 +175,7 @@ export default function MyRegistrationsPage({ user, onViewTicket, onOpenEvent })
                     className="btn btn-outline-danger"
                     onClick={() => handleCancel(reg.eventId)}
                     disabled={actionLoading}
-                    style={{ padding: '8px 14px', fontSize: '0.85rem' }}
+                    style={{ padding: '9px 16px', fontSize: '0.88rem' }}
                   >
                     Cancel
                   </button>

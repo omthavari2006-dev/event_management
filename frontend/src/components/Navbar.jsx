@@ -29,9 +29,11 @@ export default function Navbar({
       position: 'sticky',
       top: 0,
       zIndex: 100,
-      background: 'rgba(10, 14, 23, 0.85)',
-      backdropFilter: 'blur(16px)',
-      borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
+      background: 'rgba(255, 255, 255, 0.82)',
+      backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)',
+      borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
+      boxShadow: '0 4px 20px rgba(100, 116, 139, 0.06)'
     }}>
       <div style={{
         maxWidth: 1400,
@@ -51,20 +53,20 @@ export default function Navbar({
           <div style={{
             width: 42,
             height: 42,
-            borderRadius: 12,
-            background: 'linear-gradient(135deg, #6366f1 0%, #3b82f6 100%)',
+            borderRadius: 14,
+            background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #3b82f6 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 0 20px rgba(99, 102, 241, 0.4)'
+            boxShadow: '0 6px 16px rgba(99, 102, 241, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.4)'
           }}>
             <Network size={22} color="#fff" />
           </div>
           <div>
-            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: 6 }}>
-              CampusEvents <span style={{ fontSize: '0.72rem', padding: '2px 8px', borderRadius: 20, background: 'rgba(99, 102, 241, 0.2)', color: '#818cf8', border: '1px solid rgba(99, 102, 241, 0.3)' }}>Neo4j Graph</span>
+            <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.025em', display: 'flex', alignItems: 'center', gap: 6 }}>
+              CampusEvents <span style={{ fontSize: '0.72rem', padding: '3px 9px', borderRadius: 20, background: 'rgba(99, 102, 241, 0.1)', color: '#4f46e5', border: '1px solid rgba(99, 102, 241, 0.25)', fontWeight: 700 }}>Neo4j Graph</span>
             </div>
-            <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Connected Campus Management</div>
+            <div style={{ fontSize: '0.76rem', color: '#64748b', fontWeight: 500 }}>Connected Campus Management</div>
           </div>
         </div>
 
@@ -140,28 +142,30 @@ export default function Navbar({
             <button 
               onClick={() => setShowRoleMenu(!showRoleMenu)}
               className="btn btn-secondary"
-              style={{ padding: '7px 12px', fontSize: '0.82rem', borderColor: 'rgba(99, 102, 241, 0.4)', background: 'rgba(99, 102, 241, 0.1)' }}
+              style={{ padding: '8px 14px', fontSize: '0.82rem', borderColor: 'rgba(99, 102, 241, 0.4)', background: 'rgba(99, 102, 241, 0.08)' }}
               title="Switch demo persona for Viva presentation"
             >
-              <span style={{ color: '#818cf8', fontWeight: 700 }}>Demo Persona</span>
-              <ChevronDown size={14} />
+              <span style={{ color: '#4f46e5', fontWeight: 700 }}>Demo Persona</span>
+              <ChevronDown size={14} color="#4f46e5" />
             </button>
 
             {showRoleMenu && (
               <div style={{
                 position: 'absolute',
                 right: 0,
-                top: 42,
-                width: 280,
-                background: '#131b2e',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
-                borderRadius: 12,
-                boxShadow: '0 12px 30px rgba(0,0,0,0.6)',
-                padding: 8,
+                top: 46,
+                width: 290,
+                background: 'rgba(255, 255, 255, 0.96)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(203, 213, 225, 0.9)',
+                borderRadius: 14,
+                boxShadow: '0 20px 45px rgba(15, 23, 42, 0.15), inset 0 1px 1px rgba(255, 255, 255, 1)',
+                padding: 10,
                 zIndex: 200
               }}>
-                <div style={{ padding: '6px 10px', fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700 }}>
-                  Select Demo User for Viva / Test:
+                <div style={{ padding: '6px 10px', fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.04em' }}>
+                  Select Demo Persona:
                 </div>
                 {demoAccounts.map((acc, idx) => (
                   <div
@@ -171,20 +175,27 @@ export default function Navbar({
                       setShowRoleMenu(false);
                     }}
                     style={{
-                      padding: '8px 10px',
-                      borderRadius: 8,
+                      padding: '9px 12px',
+                      borderRadius: 10,
                       cursor: 'pointer',
                       fontSize: '0.84rem',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      transition: 'background 0.15s ease'
+                      transition: 'all 0.15s ease',
+                      marginBottom: 4
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(99, 102, 241, 0.08)';
+                      e.currentTarget.style.transform = 'translateX(2px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.transform = 'none';
+                    }}
                   >
                     <div>
-                      <div style={{ fontWeight: 600, color: '#f1f5f9' }}>{acc.label}</div>
+                      <div style={{ fontWeight: 700, color: '#0f172a' }}>{acc.label}</div>
                       <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{acc.email}</div>
                     </div>
                     <span className={`badge ${acc.role === 'Admin' ? 'badge-danger' : 'badge-info'}`} style={{ fontSize: '0.68rem' }}>
@@ -202,16 +213,18 @@ export default function Navbar({
               onClick={onOpenNotifications}
               style={{
                 position: 'relative',
-                background: 'rgba(255, 255, 255, 0.06)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                width: 40,
-                height: 40,
-                borderRadius: 10,
+                background: 'rgba(255, 255, 255, 0.85)',
+                border: '1.5px solid rgba(203, 213, 225, 0.8)',
+                width: 42,
+                height: 42,
+                borderRadius: 12,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: unreadCount > 0 ? '#818cf8' : '#94a3b8',
-                cursor: 'pointer'
+                color: unreadCount > 0 ? '#4f46e5' : '#64748b',
+                boxShadow: '0 2px 6px rgba(148, 163, 184, 0.12), inset 0 1px 1px rgba(255, 255, 255, 1)',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
               }}
               title="Notifications"
             >
@@ -231,7 +244,7 @@ export default function Navbar({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 0 10px rgba(239, 68, 68, 0.7)'
+                  boxShadow: '0 0 10px rgba(239, 68, 68, 0.5)'
                 }}>
                   {unreadCount}
                 </span>
@@ -246,30 +259,32 @@ export default function Navbar({
                 display: 'flex',
                 alignItems: 'center',
                 gap: 10,
-                background: 'rgba(255, 255, 255, 0.05)',
-                padding: '5px 12px',
+                background: 'rgba(255, 255, 255, 0.9)',
+                padding: '6px 14px',
                 borderRadius: 30,
-                border: '1px solid rgba(255, 255, 255, 0.08)'
+                border: '1.5px solid rgba(203, 213, 225, 0.8)',
+                boxShadow: '0 2px 8px rgba(148, 163, 184, 0.12), inset 0 1px 1px rgba(255, 255, 255, 1)'
               }}>
                 <div style={{
-                  width: 28,
-                  height: 28,
+                  width: 30,
+                  height: 30,
                   borderRadius: '50%',
                   background: user.role === 'Admin' ? 'linear-gradient(135deg, #f59e0b, #ef4444)' : user.presidentClubs?.length > 0 ? 'linear-gradient(135deg, #8b5cf6, #ec4899)' : 'linear-gradient(135deg, #6366f1, #3b82f6)',
                   color: '#fff',
                   fontSize: '0.8rem',
-                  fontWeight: 700,
+                  fontWeight: 800,
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  justifyContent: 'center',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
                 }}>
                   {user.name.charAt(0)}
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.84rem', fontWeight: 600, color: '#f8fafc', lineHeight: 1.2 }}>
+                  <div style={{ fontSize: '0.86rem', fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
                     {user.name.split(' ')[0]}
                   </div>
-                  <div style={{ fontSize: '0.68rem', fontWeight: 600, color: user.role === 'Admin' ? '#f59e0b' : user.presidentClubs?.length > 0 ? '#ec4899' : '#818cf8' }}>
+                  <div style={{ fontSize: '0.68rem', fontWeight: 700, color: user.role === 'Admin' ? '#d97706' : user.presidentClubs?.length > 0 ? '#c026d3' : '#4f46e5' }}>
                     {user.role === 'Admin' ? 'Dean / Admin' : user.presidentClubs?.length > 0 ? 'Club Organizer' : 'Student'}
                   </div>
                 </div>
@@ -280,13 +295,14 @@ export default function Navbar({
                 onClick={onLogout}
                 className="btn btn-secondary"
                 style={{ 
-                  padding: '6px 12px', 
-                  fontSize: '0.8rem', 
+                  padding: '7px 14px', 
+                  fontSize: '0.82rem', 
                   gap: 6, 
-                  borderRadius: 10,
-                  borderColor: 'rgba(99, 102, 241, 0.3)',
+                  borderRadius: 12,
+                  borderColor: 'rgba(99, 102, 241, 0.35)',
                   background: 'rgba(99, 102, 241, 0.08)',
-                  color: '#c7d2fe'
+                  color: '#4f46e5',
+                  fontWeight: 700
                 }}
                 title="Sign out and return to the Role-Based Login Screen"
               >
@@ -294,7 +310,7 @@ export default function Navbar({
               </button>
             </div>
           ) : (
-            <button className="btn btn-primary" onClick={onLogout} style={{ padding: '8px 18px', gap: 6, fontSize: '0.88rem' }}>
+            <button className="btn btn-primary" onClick={onLogout} style={{ padding: '9px 20px', gap: 6, fontSize: '0.88rem' }}>
               <ArrowLeftRight size={15} /> Choose Role / Sign In
             </button>
           )}
