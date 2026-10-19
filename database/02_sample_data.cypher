@@ -5,7 +5,7 @@
 // ============================================================================
 
 // Standard bcrypt hash for "password123":
-// $2a$10$npt5H74y0V4wM0m6iV4m9eUsqgQ7F8V1bN9L4iKqXjC4lO9Yv8Q2i
+// $2a$10$0CB91wZ5CV/LImfLGA29BOpGoWm3GDLGqRZPczLJCNjh72N1U2H9u
 
 // 1. Admins
 // ----------------------------------------------------------------------------
@@ -13,7 +13,7 @@ MERGE (a1:Admin {adminId: 'admin-001'})
 ON CREATE SET 
   a1.name = 'Dr. Sharma (Dean of Student Affairs)',
   a1.email = 'admin@campus.edu',
-  a1.passwordHash = '$2a$10$npt5H74y0V4wM0m6iV4m9eUsqgQ7F8V1bN9L4iKqXjC4lO9Yv8Q2i';
+  a1.passwordHash = '$2a$10$0CB91wZ5CV/LImfLGA29BOpGoWm3GDLGqRZPczLJCNjh72N1U2H9u';
 
 // 2. Students
 // ----------------------------------------------------------------------------
@@ -25,7 +25,7 @@ ON CREATE SET
   s1.department = 'Computer Science',
   s1.year = 3,
   s1.points = 120,
-  s1.passwordHash = '$2a$10$npt5H74y0V4wM0m6iV4m9eUsqgQ7F8V1bN9L4iKqXjC4lO9Yv8Q2i';
+  s1.passwordHash = '$2a$10$0CB91wZ5CV/LImfLGA29BOpGoWm3GDLGqRZPczLJCNjh72N1U2H9u';
 
 MERGE (s2:Student {studentId: 'stud-002'})
 ON CREATE SET 

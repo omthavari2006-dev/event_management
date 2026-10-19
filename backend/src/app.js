@@ -8,7 +8,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: '*', // Allow all in dev / presentation
+  origin: true, // Echoes request origin so headers/tokens work seamlessly in all browsers
   credentials: true
 }));
 

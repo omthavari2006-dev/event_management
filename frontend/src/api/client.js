@@ -2,7 +2,7 @@
  * Campus Events API Client
  */
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = '/api';
 
 async function request(endpoint, options = {}) {
   const token = localStorage.getItem('campus_token');
