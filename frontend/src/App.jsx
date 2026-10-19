@@ -7,7 +7,7 @@ import VerifyPage from './pages/VerifyPage';
 import OrganizerPage from './pages/OrganizerPage';
 import AdminPage from './pages/AdminPage';
 import GraphVivaExplorer from './pages/GraphVivaExplorer';
-import ERDiagramPage from './pages/ERDiagramPage';
+import RoleLoginPage from './pages/RoleLoginPage';
 
 import EventDetailModal from './components/EventDetailModal';
 import TicketModal from './components/TicketModal';
@@ -19,6 +19,7 @@ import { api } from './api/client';
 export default function App() {
   const [currentTab, setCurrentTab] = useState('events');
   const [user, setUser] = useState(null);
+  const [isGuest, setIsGuest] = useState(false);
   const [notifications, setNotifications] = useState([]);
 
   // Modals state
@@ -28,10 +29,13 @@ export default function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [verifyCodeInitial, setVerifyCodeInitial] = useState('');
 
-  // Initial authentication check & default user setup for convenience
+  // Session management: On fresh visit, always show the Role-Based Login Page first!
+  // Only restore if user actively signed in during this browser session
   const loadUserAndNotifs = async () => {
+    const sessionActive = sessionStorage.getItem('campus_session_active');
     const token = localStorage.getItem('campus_token');
-    if (token) {
+    
+    if (sessionActive === 'true' && token) {
       try {
         const res = await api.getMe();
         setUser(res.user);
@@ -40,21 +44,14 @@ export default function App() {
           setNotifications(notifRes.notifications || []);
         }
       } catch (err) {
-        console.warn('Session expired or invalid, clearing token.');
+        console.warn('Session expired, clearing credentials.');
         localStorage.removeItem('campus_token');
+        sessionStorage.removeItem('campus_session_active');
         setUser(null);
       }
     } else {
-      // For immediate zero-hassle presentation demo: Auto-login as Alex Rivera (President of CodeCraft)
-      try {
-        const res = await api.login('alex@campus.edu', 'password123');
-        localStorage.setItem('campus_token', res.token);
-        setUser(res.user);
-        const notifRes = await api.getNotifications();
-        setNotifications(notifRes.notifications || []);
-      } catch (e) {
-        // backend might not be started yet, that's fine
-      }
+      // Clean start: ensure user lands on the Role-Based Login Screen first
+      setUser(null);
     }
   };
 
@@ -62,16 +59,51 @@ export default function App() {
     loadUserAndNotifs();
   }, []);
 
+  const handleLoginSuccess = (loggedInUser, preferredRole) => {
+    sessionStorage.setItem('campus_session_active', 'true');
+    setUser(loggedInUser);
+    setIsGuest(false);
+    setShowAuthModal(false);
+
+    // Direct routing based on role
+    if (preferredRole === 'Admin' || loggedInUser.role === 'Admin') {
+      setCurrentTab('admin');
+    } else if (preferredRole === 'Organizer') {
+      setCurrentTab('organizer');
+    } else {
+      setCurrentTab('events');
+    }
+
+    if (loggedInUser.role === 'Student') {
+      api.getNotifications()
+        .then(res => setNotifications(res.notifications || []))
+        .catch(() => {});
+    }
+  };
+
   const handleQuickLogin = async (email, password) => {
     try {
       const res = await api.login(email, password);
+      sessionStorage.setItem('campus_session_active', 'true');
       localStorage.setItem('campus_token', res.token);
       setUser(res.user);
-      if (res.user.role === 'Student') {
+      setIsGuest(false);
+
+      if (res.user.role === 'Admin') {
+        setCurrentTab('admin');
+        setNotifications([]);
+      } else {
+        const hasOrgRole = res.user.presidentClubs?.length > 0 || 
+          res.user.clubMemberships?.some(m => m.role === 'President' || m.role === 'Organizer');
+        
+        if (hasOrgRole) {
+          setCurrentTab('organizer');
+        } else {
+          setCurrentTab('events');
+        }
+
         const notifRes = await api.getNotifications();
         setNotifications(notifRes.notifications || []);
-      } else {
-        setNotifications([]);
       }
     } catch (err) {
       alert(`Could not sign in as ${email}: ${err.message}`);
@@ -80,8 +112,11 @@ export default function App() {
 
   const handleLogout = () => {
     localStorage.removeItem('campus_token');
+    sessionStorage.removeItem('campus_session_active');
     setUser(null);
+    setIsGuest(false);
     setNotifications([]);
+    setCurrentTab('events');
   };
 
   const handleNavigateToVerify = (code) => {
@@ -89,8 +124,45 @@ export default function App() {
     setCurrentTab('verify');
   };
 
+  // If user is not logged in and hasn't chosen guest mode, render the Role-Based Login Page FIRST!
+  if (!user && !isGuest) {
+    return (
+      <RoleLoginPage 
+        onLoginSuccess={handleLoginSuccess}
+        onExploreGuest={() => {
+          setIsGuest(true);
+          setCurrentTab('events');
+        }}
+      />
+    );
+  }
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* Guest Mode Indicator Banner */}
+      {isGuest && !user && (
+        <div style={{
+          background: 'linear-gradient(90deg, rgba(99, 102, 241, 0.2), rgba(14, 165, 233, 0.2))',
+          borderBottom: '1px solid rgba(99, 102, 241, 0.3)',
+          padding: '8px 24px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          fontSize: '0.85rem'
+        }}>
+          <span style={{ color: '#cbd5e1' }}>
+            👀 You are currently browsing in <strong>Guest Mode</strong> (Public event catalog & certificate verification).
+          </span>
+          <button 
+            className="btn btn-primary"
+            onClick={() => setIsGuest(false)}
+            style={{ padding: '4px 14px', fontSize: '0.8rem' }}
+          >
+            Sign In with Role
+          </button>
+        </div>
+      )}
+
       {/* Top Navbar */}
       <Navbar 
         currentTab={currentTab}
@@ -153,10 +225,6 @@ export default function App() {
             user={user} 
           />
         )}
-
-        {currentTab === 'er-diagram' && (
-          <ERDiagramPage />
-        )}
       </main>
 
       {/* Modals and Drawers */}
@@ -188,10 +256,7 @@ export default function App() {
       <LoginModal 
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
-        onLoginSuccess={(loggedInUser) => {
-          setUser(loggedInUser);
-          loadUserAndNotifs();
-        }}
+        onLoginSuccess={(loggedInUser) => handleLoginSuccess(loggedInUser, loggedInUser.role)}
       />
     </div>
   );

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Calendar, Award, CheckCircle, Shield, Users, Bell, 
-  Sparkles, LogOut, Network, Search, Ticket, ChevronDown, Database 
+  Sparkles, LogOut, Network, Search, Ticket, ChevronDown, ArrowLeftRight 
 } from 'lucide-react';
 
 export default function Navbar({ 
@@ -125,14 +125,6 @@ export default function Navbar({
           )}
 
           <button 
-            className={`btn ${currentTab === 'er-diagram' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setCurrentTab('er-diagram')}
-            style={{ padding: '8px 14px', fontSize: '0.88rem', borderColor: 'rgba(16, 185, 129, 0.4)', color: currentTab === 'er-diagram' ? '#fff' : '#34d399' }}
-          >
-            <Database size={16} /> ER Schema
-          </button>
-
-          <button 
             className={`btn ${currentTab === 'viva' ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setCurrentTab('viva')}
             style={{ padding: '8px 14px', fontSize: '0.88rem', borderColor: 'rgba(6, 182, 212, 0.4)', color: currentTab === 'viva' ? '#fff' : '#38bdf8' }}
@@ -247,50 +239,63 @@ export default function Navbar({
             </button>
           )}
 
-          {/* Current User Pill or Login */}
+          {/* Current User Pill or Sign In */}
           {user ? (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              background: 'rgba(255, 255, 255, 0.05)',
-              padding: '6px 12px',
-              borderRadius: 30,
-              border: '1px solid rgba(255, 255, 255, 0.08)'
-            }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{
-                width: 28,
-                height: 28,
-                borderRadius: '50%',
-                background: user.role === 'Admin' ? '#ef4444' : '#6366f1',
-                color: '#fff',
-                fontSize: '0.8rem',
-                fontWeight: 700,
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                gap: 10,
+                background: 'rgba(255, 255, 255, 0.05)',
+                padding: '5px 12px',
+                borderRadius: 30,
+                border: '1px solid rgba(255, 255, 255, 0.08)'
               }}>
-                {user.name.charAt(0)}
-              </div>
-              <div>
-                <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#f8fafc', lineHeight: 1.2 }}>
-                  {user.name.split(' ')[0]}
+                <div style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: '50%',
+                  background: user.role === 'Admin' ? 'linear-gradient(135deg, #f59e0b, #ef4444)' : user.presidentClubs?.length > 0 ? 'linear-gradient(135deg, #8b5cf6, #ec4899)' : 'linear-gradient(135deg, #6366f1, #3b82f6)',
+                  color: '#fff',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  {user.name.charAt(0)}
                 </div>
-                <div style={{ fontSize: '0.7rem', color: user.role === 'Admin' ? '#f87171' : '#818cf8' }}>
-                  {user.role} {user.points ? `• ${user.points} pts` : ''}
+                <div>
+                  <div style={{ fontSize: '0.84rem', fontWeight: 600, color: '#f8fafc', lineHeight: 1.2 }}>
+                    {user.name.split(' ')[0]}
+                  </div>
+                  <div style={{ fontSize: '0.68rem', fontWeight: 600, color: user.role === 'Admin' ? '#f59e0b' : user.presidentClubs?.length > 0 ? '#ec4899' : '#818cf8' }}>
+                    {user.role === 'Admin' ? 'Dean / Admin' : user.presidentClubs?.length > 0 ? 'Club Organizer' : 'Student'}
+                  </div>
                 </div>
               </div>
+
+              {/* Dedicated Switch Role Button */}
               <button 
                 onClick={onLogout}
-                style={{ background: 'transparent', color: '#94a3b8', padding: 4, display: 'flex' }}
-                title="Sign out"
+                className="btn btn-secondary"
+                style={{ 
+                  padding: '6px 12px', 
+                  fontSize: '0.8rem', 
+                  gap: 6, 
+                  borderRadius: 10,
+                  borderColor: 'rgba(99, 102, 241, 0.3)',
+                  background: 'rgba(99, 102, 241, 0.08)',
+                  color: '#c7d2fe'
+                }}
+                title="Sign out and return to the Role-Based Login Screen"
               >
-                <LogOut size={16} />
+                <ArrowLeftRight size={14} /> Switch Role
               </button>
             </div>
           ) : (
-            <button className="btn btn-primary" onClick={onOpenAuth} style={{ padding: '8px 18px' }}>
-              Sign In
+            <button className="btn btn-primary" onClick={onLogout} style={{ padding: '8px 18px', gap: 6, fontSize: '0.88rem' }}>
+              <ArrowLeftRight size={15} /> Choose Role / Sign In
             </button>
           )}
         </div>
