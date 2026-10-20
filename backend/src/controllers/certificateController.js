@@ -26,6 +26,30 @@ const verifyCertificate = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, certificate, valid: true });
 });
 
+const getEventAttendeesWithCertificates = asyncHandler(async (req, res) => {
+  const { eventId } = req.params;
+  const attendees = await certificateService.getEventAttendeesWithCertificates(eventId);
+  res.status(200).json({ success: true, count: attendees.length, attendees });
+});
+
+const uploadStudentCertificate = asyncHandler(async (req, res) => {
+  const { eventId, studentId } = req.params;
+  const { fileData, fileName, fileType, type } = req.body;
+  const certificate = await certificateService.uploadStudentCertificate({
+    eventId,
+    studentId,
+    fileData,
+    fileName,
+    fileType,
+    type
+  });
+  res.status(200).json({
+    success: true,
+    certificate,
+    message: 'Certificate uploaded and issued successfully.'
+  });
+});
+
 const downloadCertificatePdf = asyncHandler(async (req, res) => {
   const { certificateId } = req.params;
   const pdfBuffer = await certificateService.generateCertificatePdf(certificateId);
@@ -35,9 +59,26 @@ const downloadCertificatePdf = asyncHandler(async (req, res) => {
   res.send(pdfBuffer);
 });
 
+const downloadCertificateFile = asyncHandler(async (req, res) => {
+  const { certificateId } = req.params;
+  const fileResult = await certificateService.getCertificateFile(certificateId);
+  if (fileResult.type === 'custom') {
+    res.setHeader('Content-Type', fileResult.mimeType);
+    res.setHeader('Content-Disposition', `inline; filename="${fileResult.fileName}"`);
+    res.sendFile(fileResult.filePath);
+  } else {
+    res.setHeader('Content-Type', fileResult.mimeType);
+    res.setHeader('Content-Disposition', `inline; filename="${fileResult.fileName}"`);
+    res.send(fileResult.buffer);
+  }
+});
+
 module.exports = {
   generateCertificates,
+  getEventAttendeesWithCertificates,
+  uploadStudentCertificate,
   getMyCertificates,
   verifyCertificate,
-  downloadCertificatePdf
+  downloadCertificatePdf,
+  downloadCertificateFile
 };

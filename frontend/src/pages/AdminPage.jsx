@@ -27,17 +27,18 @@ ChartJS.register(
 );
 
 export default function AdminPage({ user, onRefresh }) {
-  const [activeAdminTab, setActiveAdminTab] = useState('approvals'); // 'approvals' | 'completed' | 'analytics'
+  const [activeAdminTab, setActiveAdminTab] = useState('approvals'); // 'approvals' | 'manage_events' | 'analytics'
   const [pendingClubs, setPendingClubs] = useState([]);
   const [pendingEvents, setPendingEvents] = useState([]);
-  const [completedEvents, setCompletedEvents] = useState([]);
-  const [selectedCompletedEventId, setSelectedCompletedEventId] = useState('');
-  const [selectedCompletedEvent, setSelectedCompletedEvent] = useState(null);
-  const [completedRegistrations, setCompletedRegistrations] = useState([]);
-  const [completedWinners, setCompletedWinners] = useState([]);
-  const [completedFeedback, setCompletedFeedback] = useState([]);
+  const [managedEvents, setManagedEvents] = useState([]);
+  const [selectedEventId, setSelectedEventId] = useState('');
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [eventRegistrations, setEventRegistrations] = useState([]);
+  const [eventWinners, setEventWinners] = useState([]);
+  const [eventFeedback, setEventFeedback] = useState([]);
 
-  const [completedSearch, setCompletedSearch] = useState('');
+  const [eventPhaseFilter, setEventPhaseFilter] = useState('All'); // 'All' | 'Ongoing' | 'Completed' | 'Registration'
+  const [eventSearchQuery, setEventSearchQuery] = useState('');
   const [attendeeSearch, setAttendeeSearch] = useState('');
   const [attendeeFilter, setAttendeeFilter] = useState('All'); // 'All' | 'Present' | 'Absent'
 
@@ -89,16 +90,16 @@ export default function AdminPage({ user, onRefresh }) {
         console.warn('Could not fetch pending events:', err);
       }
 
-      // 3. Fetch completed events
+      // 3. Fetch all managed events (Approved and Completed)
       try {
-        const compRes = await api.getEvents({ status: 'Completed' });
-        const cEvents = compRes.events || [];
-        setCompletedEvents(cEvents);
-        if (cEvents.length > 0 && !selectedCompletedEventId) {
-          setSelectedCompletedEventId(cEvents[0].eventId);
+        const eventsRes = await api.getEvents({ status: 'public' });
+        const allEvts = eventsRes.events || [];
+        setManagedEvents(allEvts);
+        if (allEvts.length > 0 && !selectedEventId) {
+          setSelectedEventId(allEvts[0].eventId);
         }
       } catch (err) {
-        console.warn('Could not fetch completed events:', err);
+        console.warn('Could not fetch managed events:', err);
       }
 
       // 4. Fetch admin analytics
@@ -118,39 +119,39 @@ export default function AdminPage({ user, onRefresh }) {
     loadData();
   }, [user]);
 
-  // Load detailed information for the selected completed event
+  // Load detailed information for the selected event (Ongoing or Completed)
   useEffect(() => {
-    async function loadCompletedEventDetails() {
-      if (!selectedCompletedEventId) {
-        setSelectedCompletedEvent(null);
-        setCompletedRegistrations([]);
-        setCompletedWinners([]);
-        setCompletedFeedback([]);
+    async function loadSelectedEventDetails() {
+      if (!selectedEventId) {
+        setSelectedEvent(null);
+        setEventRegistrations([]);
+        setEventWinners([]);
+        setEventFeedback([]);
         return;
       }
       try {
         setDetailLoading(true);
         const [eventRes, regsRes, winRes, fbRes] = await Promise.all([
-          api.getEvent(selectedCompletedEventId).catch(() => ({ event: null })),
-          api.getEventRegistrations(selectedCompletedEventId).catch(() => ({ registrations: [] })),
-          api.getWinners(selectedCompletedEventId).catch(() => ({ winners: [] })),
-          api.getFeedback(selectedCompletedEventId).catch(() => ({ feedback: [] }))
+          api.getEvent(selectedEventId).catch(() => ({ event: null })),
+          api.getEventRegistrations(selectedEventId).catch(() => ({ registrations: [] })),
+          api.getWinners(selectedEventId).catch(() => ({ winners: [] })),
+          api.getFeedback(selectedEventId).catch(() => ({ feedback: [] }))
         ]);
-        setSelectedCompletedEvent(eventRes?.event || null);
-        setCompletedRegistrations(regsRes?.registrations || []);
-        setCompletedWinners(winRes?.winners || []);
-        setCompletedFeedback(fbRes?.feedback || []);
+        setSelectedEvent(eventRes?.event || null);
+        setEventRegistrations(regsRes?.registrations || []);
+        setEventWinners(winRes?.winners || []);
+        setEventFeedback(fbRes?.feedback || []);
       } catch (err) {
-        console.error('Error loading completed event details:', err);
+        console.error('Error loading event details:', err);
       } finally {
         setDetailLoading(false);
       }
     }
 
-    if (selectedCompletedEventId) {
-      loadCompletedEventDetails();
+    if (selectedEventId) {
+      loadSelectedEventDetails();
     }
-  }, [selectedCompletedEventId]);
+  }, [selectedEventId]);
 
   const handleApproveClub = async (clubId) => {
     try {
@@ -196,16 +197,44 @@ export default function AdminPage({ user, onRefresh }) {
     }
   };
 
-  // Completed events aggregated stats
-  const totalCompletedCount = completedEvents.length;
-  const totalCompletedRegs = completedEvents.reduce((acc, e) => acc + (e.registeredCount || 0), 0);
-  const totalCompletedAttended = completedEvents.reduce((acc, e) => acc + (e.attendedCount || 0), 0);
-  const overallCompletedTurnout = totalCompletedRegs > 0 ? Math.round((totalCompletedAttended / totalCompletedRegs) * 100) : 0;
+  const now = new Date();
 
-  // Filtered completed events list
-  const filteredCompletedEvents = completedEvents.filter(e => {
-    if (!completedSearch.trim()) return true;
-    const q = completedSearch.toLowerCase();
+  // Managed events aggregated stats
+  const totalManagedCount = managedEvents.length;
+  const totalManagedRegs = managedEvents.reduce((acc, e) => acc + (e.registeredCount || 0), 0);
+  const totalManagedAttended = managedEvents.reduce((acc, e) => acc + (e.attendedCount || 0), 0);
+  const overallTurnout = totalManagedRegs > 0 ? Math.round((totalManagedAttended / totalManagedRegs) * 100) : 0;
+
+  // Counts by phase
+  const ongoingEventsCount = managedEvents.filter(e => {
+    const s = new Date(e.startDateTime);
+    const end = e.endDateTime ? new Date(e.endDateTime) : null;
+    return e.status === 'Approved' && now >= s && (!end || now <= end);
+  }).length;
+
+  const completedEventsCount = managedEvents.filter(e => {
+    return e.status === 'Completed' || (e.endDateTime && now > new Date(e.endDateTime));
+  }).length;
+
+  const registrationEventsCount = managedEvents.filter(e => {
+    const s = new Date(e.startDateTime);
+    return e.status === 'Approved' && now < s;
+  }).length;
+
+  // Filtered managed events list
+  const filteredManagedEvents = managedEvents.filter(e => {
+    const s = new Date(e.startDateTime);
+    const end = e.endDateTime ? new Date(e.endDateTime) : null;
+    const isOngoing = e.status === 'Approved' && now >= s && (!end || now <= end);
+    const isCompleted = e.status === 'Completed' || (end && now > end);
+    const isReg = e.status === 'Approved' && now < s;
+
+    if (eventPhaseFilter === 'Ongoing' && !isOngoing) return false;
+    if (eventPhaseFilter === 'Completed' && !isCompleted) return false;
+    if (eventPhaseFilter === 'Registration' && !isReg) return false;
+
+    if (!eventSearchQuery.trim()) return true;
+    const q = eventSearchQuery.toLowerCase();
     return (
       e.name?.toLowerCase().includes(q) ||
       e.clubName?.toLowerCase().includes(q) ||
@@ -214,14 +243,14 @@ export default function AdminPage({ user, onRefresh }) {
     );
   });
 
-  // Selected completed event attendance metrics
-  const registeredAttendees = completedRegistrations.filter(r => r.status === 'Registered');
+  // Selected event attendance metrics
+  const registeredAttendees = eventRegistrations.filter(r => r.status === 'Registered');
   const verifiedAttendedCount = registeredAttendees.filter(r => r.attended).length;
   const absentAttendeeCount = registeredAttendees.length - verifiedAttendedCount;
   const selectedTurnoutPercent = registeredAttendees.length > 0 ? Math.round((verifiedAttendedCount / registeredAttendees.length) * 100) : 0;
 
-  // Filtered registrations in selected completed event
-  const filteredAttendees = completedRegistrations.filter(r => {
+  // Filtered registrations in selected event
+  const filteredAttendees = eventRegistrations.filter(r => {
     const matchesSearch = 
       !attendeeSearch.trim() ||
       r.studentName?.toLowerCase().includes(attendeeSearch.toLowerCase()) ||
@@ -371,9 +400,9 @@ export default function AdminPage({ user, onRefresh }) {
           )}
         </button>
 
-        {/* Tab 2: Completed Events (The separate tab requested by user!) */}
+        {/* Tab 2: Manage Events (Ongoing & Completed) */}
         <button
-          onClick={() => setActiveAdminTab('completed')}
+          onClick={() => setActiveAdminTab('manage_events')}
           style={{
             padding: '10px 22px',
             borderRadius: 14,
@@ -383,23 +412,23 @@ export default function AdminPage({ user, onRefresh }) {
             display: 'inline-flex',
             alignItems: 'center',
             gap: 8,
-            background: activeAdminTab === 'completed' ? 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)' : 'rgba(255, 255, 255, 0.85)',
-            color: activeAdminTab === 'completed' ? '#ffffff' : '#475569',
-            border: activeAdminTab === 'completed' ? 'none' : '1px solid #e2e8f0',
-            boxShadow: activeAdminTab === 'completed' ? '0 4px 14px rgba(124, 58, 237, 0.35)' : 'none',
+            background: activeAdminTab === 'manage_events' ? 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)' : 'rgba(255, 255, 255, 0.85)',
+            color: activeAdminTab === 'manage_events' ? '#ffffff' : '#475569',
+            border: activeAdminTab === 'manage_events' ? 'none' : '1px solid #e2e8f0',
+            boxShadow: activeAdminTab === 'manage_events' ? '0 4px 14px rgba(124, 58, 237, 0.35)' : 'none',
             transition: 'all 0.15s ease'
           }}
         >
-          <CheckCircle size={16} /> Completed Events & Audit
+          <Calendar size={16} /> Manage Events (Ongoing & Completed)
           <span style={{
-            background: activeAdminTab === 'completed' ? 'rgba(255, 255, 255, 0.28)' : 'rgba(124, 58, 237, 0.12)',
-            color: activeAdminTab === 'completed' ? '#ffffff' : '#7c3aed',
+            background: activeAdminTab === 'manage_events' ? 'rgba(255, 255, 255, 0.28)' : 'rgba(124, 58, 237, 0.12)',
+            color: activeAdminTab === 'manage_events' ? '#ffffff' : '#7c3aed',
             padding: '2px 8px',
             borderRadius: 10,
             fontSize: '0.74rem',
             fontWeight: 800
           }}>
-            {completedEvents.length}
+            {managedEvents.length}
           </span>
         </button>
 
@@ -628,11 +657,11 @@ export default function AdminPage({ user, onRefresh }) {
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 2: COMPLETED EVENTS (SEPARATED TAB)                                  */}
+      {/* TAB 2: MANAGE EVENTS (ONGOING & COMPLETED)                                */}
       {/* ========================================================================= */}
-      {activeAdminTab === 'completed' && (
+      {activeAdminTab === 'manage_events' && (
         <div>
-          {/* Top KPI Header for Completed Events */}
+          {/* Top KPI Header for Managed Events */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -640,9 +669,25 @@ export default function AdminPage({ user, onRefresh }) {
             marginBottom: 28
           }}>
             <div className="glass-panel" style={{ padding: 18 }}>
-              <div style={{ fontSize: '0.74rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Completed Events</div>
+              <div style={{ fontSize: '0.74rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Total Managed Events</div>
               <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#7c3aed', marginTop: 4 }}>
-                {totalCompletedCount}
+                {totalManagedCount}
+              </div>
+              <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: 4 }}>All Approved & Completed</div>
+            </div>
+
+            <div className="glass-panel" style={{ padding: 18 }}>
+              <div style={{ fontSize: '0.74rem', color: '#dc2626', textTransform: 'uppercase', fontWeight: 700 }}>⚡ Live / Ongoing</div>
+              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#dc2626', marginTop: 4 }}>
+                {ongoingEventsCount}
+              </div>
+              <div style={{ fontSize: '0.8rem', color: '#059669', marginTop: 4, fontWeight: 600 }}>Active attendance check-in</div>
+            </div>
+
+            <div className="glass-panel" style={{ padding: 18 }}>
+              <div style={{ fontSize: '0.74rem', color: '#7e22ce', textTransform: 'uppercase', fontWeight: 700 }}>🏁 Completed Events</div>
+              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#7e22ce', marginTop: 4 }}>
+                {completedEventsCount}
               </div>
               <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: 4 }}>Concluded & recorded in Neo4j</div>
             </div>
@@ -650,32 +695,24 @@ export default function AdminPage({ user, onRefresh }) {
             <div className="glass-panel" style={{ padding: 18 }}>
               <div style={{ fontSize: '0.74rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Total Registered Students</div>
               <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#0f172a', marginTop: 4 }}>
-                {totalCompletedRegs}
+                {totalManagedRegs}
               </div>
-              <div style={{ fontSize: '0.8rem', color: '#0284c7', marginTop: 4 }}>Across all concluded events</div>
+              <div style={{ fontSize: '0.8rem', color: '#0284c7', marginTop: 4 }}>Across campus events</div>
             </div>
 
             <div className="glass-panel" style={{ padding: 18 }}>
-              <div style={{ fontSize: '0.74rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Verified In-Person Attendees</div>
+              <div style={{ fontSize: '0.74rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Total Verified Attendees</div>
               <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#10b981', marginTop: 4 }}>
-                {totalCompletedAttended}
-              </div>
-              <div style={{ fontSize: '0.8rem', color: '#10b981', marginTop: 4, fontWeight: 600 }}>Marked by Club Organizers</div>
-            </div>
-
-            <div className="glass-panel" style={{ padding: 18 }}>
-              <div style={{ fontSize: '0.74rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Overall Turnout Rate</div>
-              <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#4f46e5', marginTop: 4 }}>
-                {overallCompletedTurnout}%
+                {totalManagedAttended} ({overallTurnout}%)
               </div>
               <div style={{ width: '100%', height: 6, borderRadius: 4, background: '#e2e8f0', marginTop: 8, overflow: 'hidden' }}>
-                <div style={{ width: `${overallCompletedTurnout}%`, height: '100%', background: 'linear-gradient(90deg, #10b981, #6366f1)' }} />
+                <div style={{ width: `${overallTurnout}%`, height: '100%', background: 'linear-gradient(90deg, #10b981, #6366f1)' }} />
               </div>
             </div>
           </div>
 
           {/* Master-Detail Layout */}
-          {completedEvents.length === 0 ? (
+          {managedEvents.length === 0 ? (
             <div style={{
               textAlign: 'center',
               padding: '64px 24px',
@@ -684,41 +721,76 @@ export default function AdminPage({ user, onRefresh }) {
               border: '1.5px solid rgba(226, 232, 240, 0.9)',
               boxShadow: '0 10px 30px rgba(100, 116, 139, 0.06)'
             }}>
-              <CheckCircle size={48} color="#7c3aed" style={{ margin: '0 auto 16px' }} />
-              <h3 style={{ fontSize: '1.35rem', marginBottom: 8, color: '#0f172a', fontWeight: 700 }}>No Completed Events Yet</h3>
+              <Calendar size={48} color="#7c3aed" style={{ margin: '0 auto 16px' }} />
+              <h3 style={{ fontSize: '1.35rem', marginBottom: 8, color: '#0f172a', fontWeight: 700 }}>No Events to Manage Yet</h3>
               <p style={{ color: '#64748b', fontSize: '0.94rem', maxWidth: 520, margin: '0 auto', lineHeight: 1.6 }}>
-                Events that have been conducted by club organizers and sealed via the <strong>"Complete Event"</strong> action will appear here. The administration can inspect individual student attendance records, turnout rates, declared winners, and participant feedback.
+                When events are proposed by club organizers and approved by Administration, they will appear here. The admin can track live ongoing attendance, review completed attendance rosters, inspect turnout rates, and review organizer records.
               </p>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 380px) 1fr', gap: 24, alignItems: 'flex-start' }}>
-              {/* Left Column: Completed Events List & Selector */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(330px, 390px) 1fr', gap: 24, alignItems: 'flex-start' }}>
+              {/* Left Column: Events Selector with Phase Filter Pills & Search */}
               <div className="glass-panel" style={{ padding: 20 }}>
                 <div style={{ marginBottom: 14 }}>
                   <h3 style={{ fontSize: '1.15rem', color: '#0f172a', fontWeight: 800, marginBottom: 10 }}>
-                    Completed Events ({filteredCompletedEvents.length})
+                    Campus Events ({filteredManagedEvents.length})
                   </h3>
+
+                  {/* Phase Filter Pills */}
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+                    {[
+                      { key: 'All', label: `All (${managedEvents.length})` },
+                      { key: 'Ongoing', label: `⚡ Live (${ongoingEventsCount})` },
+                      { key: 'Completed', label: `🏁 Done (${completedEventsCount})` },
+                      { key: 'Registration', label: `📝 Reg (${registrationEventsCount})` }
+                    ].map(f => (
+                      <button
+                        key={f.key}
+                        onClick={() => setEventPhaseFilter(f.key)}
+                        style={{
+                          padding: '5px 11px',
+                          borderRadius: 12,
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          background: eventPhaseFilter === f.key ? '#0f172a' : 'rgba(241, 245, 249, 0.85)',
+                          color: eventPhaseFilter === f.key ? '#ffffff' : '#475569',
+                          border: `1.5px solid ${eventPhaseFilter === f.key ? '#0f172a' : 'rgba(226, 232, 240, 0.9)'}`,
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Search Bar */}
                   <div style={{ position: 'relative' }}>
                     <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
                     <input 
                       type="text"
-                      placeholder="Search completed events..."
-                      value={completedSearch}
-                      onChange={(e) => setCompletedSearch(e.target.value)}
+                      placeholder="Search event name, club, venue..."
+                      value={eventSearchQuery}
+                      onChange={(e) => setEventSearchQuery(e.target.value)}
                       style={{ width: '100%', paddingLeft: 34, paddingRight: 10, paddingTop: 8, paddingBottom: 8, borderRadius: 10, fontSize: '0.85rem' }}
                     />
                   </div>
                 </div>
 
+                {/* Event Cards Scroll List */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: '680px', overflowY: 'auto', paddingRight: 4 }}>
-                  {filteredCompletedEvents.map((evt) => {
-                    const isSelected = selectedCompletedEventId === evt.eventId;
-                    const turnout = evt.registeredCount > 0 ? Math.round((evt.attendedCount / evt.registeredCount) * 100) : 0;
+                  {filteredManagedEvents.map((evt) => {
+                    const isSelected = selectedEventId === evt.eventId;
+                    const turnout = evt.registeredCount > 0 ? Math.round(((evt.attendedCount || 0) / evt.registeredCount) * 100) : 0;
+                    const s = new Date(evt.startDateTime);
+                    const end = evt.endDateTime ? new Date(evt.endDateTime) : null;
+                    const isOngoing = evt.status === 'Approved' && now >= s && (!end || now <= end);
+                    const isCompleted = evt.status === 'Completed' || (end && now > end);
 
                     return (
                       <div
                         key={evt.eventId}
-                        onClick={() => setSelectedCompletedEventId(evt.eventId)}
+                        onClick={() => setSelectedEventId(evt.eventId)}
                         style={{
                           padding: 14,
                           borderRadius: 14,
@@ -728,7 +800,9 @@ export default function AdminPage({ user, onRefresh }) {
                             : 'rgba(255, 255, 255, 0.85)',
                           border: isSelected 
                             ? '2px solid #7c3aed' 
-                            : '1.5px solid rgba(226, 232, 240, 0.9)',
+                            : isOngoing 
+                              ? '2px solid rgba(239, 68, 68, 0.5)'
+                              : '1.5px solid rgba(226, 232, 240, 0.9)',
                           boxShadow: isSelected 
                             ? '0 6px 18px rgba(124, 58, 237, 0.15)' 
                             : '0 2px 6px rgba(100, 116, 139, 0.04)',
@@ -737,7 +811,29 @@ export default function AdminPage({ user, onRefresh }) {
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
                           <span className="badge badge-purple" style={{ fontSize: '0.74rem' }}>{evt.clubName}</span>
-                          <span className="badge badge-info" style={{ fontSize: '0.74rem' }}>{evt.type}</span>
+                          {isOngoing ? (
+                            <span className="badge" style={{
+                              background: 'rgba(239, 68, 68, 0.15)',
+                              color: '#dc2626',
+                              border: '1.5px solid rgba(239, 68, 68, 0.4)',
+                              fontWeight: 800,
+                              fontSize: '0.72rem',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4
+                            }}>
+                              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#dc2626', display: 'inline-block' }}></span>
+                              LIVE
+                            </span>
+                          ) : isCompleted ? (
+                            <span className="badge badge-purple" style={{ fontSize: '0.72rem' }}>
+                              🏁 Completed
+                            </span>
+                          ) : (
+                            <span className="badge badge-success" style={{ fontSize: '0.72rem' }}>
+                              Registration
+                            </span>
+                          )}
                         </div>
 
                         <h4 style={{ fontSize: '0.98rem', fontWeight: 700, color: '#0f172a', marginBottom: 4 }}>
@@ -760,9 +856,9 @@ export default function AdminPage({ user, onRefresh }) {
                         }}>
                           <span style={{ color: '#0f172a', fontWeight: 600 }}>👥 Reg: {evt.registeredCount}</span>
                           <span style={{ color: '#cbd5e1' }}>•</span>
-                          <span style={{ color: '#059669', fontWeight: 700 }}>✅ Attended: {evt.attendedCount}</span>
+                          <span style={{ color: '#059669', fontWeight: 700 }}>✅ Attended: {evt.attendedCount || 0}</span>
                           <span style={{ color: '#cbd5e1' }}>•</span>
-                          <span style={{ color: '#7c3aed', fontWeight: 700 }}>{turnout}%</span>
+                          <span style={{ color: '#7c3aed', fontWeight: 700 }}>{turnout}% Turnout</span>
                         </div>
                       </div>
                     );
@@ -770,8 +866,8 @@ export default function AdminPage({ user, onRefresh }) {
                 </div>
               </div>
 
-              {/* Right Column: Comprehensive Selected Event Details Updated by Organiser */}
-              {selectedCompletedEvent ? (
+              {/* Right Column: Comprehensive Selected Event Inspector */}
+              {selectedEvent ? (
                 <div className="glass-panel" style={{ padding: 28 }}>
                   {detailLoading ? (
                     <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>Loading event attendance details...</div>
@@ -791,10 +887,36 @@ export default function AdminPage({ user, onRefresh }) {
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
                             <h2 style={{ fontSize: '1.65rem', color: '#0f172a', fontWeight: 800 }}>
-                              {selectedCompletedEvent.name}
+                              {selectedEvent.name}
                             </h2>
-                            <span className="badge badge-purple" style={{ fontSize: '0.8rem' }}>🏁 Completed</span>
-                            <span className="badge badge-info">{selectedCompletedEvent.type}</span>
+                            {(() => {
+                              const s = new Date(selectedEvent.startDateTime);
+                              const end = selectedEvent.endDateTime ? new Date(selectedEvent.endDateTime) : null;
+                              const isOngoing = selectedEvent.status === 'Approved' && now >= s && (!end || now <= end);
+                              const isCompleted = selectedEvent.status === 'Completed' || (end && now > end);
+
+                              if (isOngoing) {
+                                return (
+                                  <span className="badge" style={{
+                                    background: 'rgba(239, 68, 68, 0.15)',
+                                    color: '#dc2626',
+                                    border: '1.5px solid rgba(239, 68, 68, 0.4)',
+                                    fontWeight: 800,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 6
+                                  }}>
+                                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#dc2626', display: 'inline-block' }}></span>
+                                    LIVE ONGOING
+                                  </span>
+                                );
+                              }
+                              if (isCompleted) {
+                                return <span className="badge badge-purple" style={{ fontSize: '0.8rem' }}>🏁 Completed</span>;
+                              }
+                              return <span className="badge badge-success" style={{ fontSize: '0.8rem' }}>🟢 Open for Registration</span>;
+                            })()}
+                            <span className="badge badge-info">{selectedEvent.type}</span>
                           </div>
 
                           {/* "Who Organises" details */}
@@ -810,26 +932,46 @@ export default function AdminPage({ user, onRefresh }) {
                             border: '1px solid rgba(226, 232, 240, 0.9)'
                           }}>
                             <div>
-                              🏛️ <strong>Organized By:</strong> <span style={{ color: '#0f172a', fontWeight: 700 }}>{selectedCompletedEvent.clubName}</span>
+                              🏛️ <strong>Organized By:</strong> <span style={{ color: '#0f172a', fontWeight: 700 }}>{selectedEvent.clubName}</span>
                             </div>
-                            {selectedCompletedEvent.presidentName && (
+                            {selectedEvent.presidentName && (
                               <div>
-                                👑 <strong>Club President:</strong> <span style={{ color: '#0f172a' }}>{selectedCompletedEvent.presidentName}</span>
+                                👑 <strong>Club President:</strong> <span style={{ color: '#0f172a' }}>{selectedEvent.presidentName}</span>
                               </div>
                             )}
-                            {selectedCompletedEvent.facultyAdvisor && (
+                            {selectedEvent.facultyAdvisor && (
                               <div>
-                                🎓 <strong>Faculty Advisor:</strong> <span style={{ color: '#0f172a' }}>{selectedCompletedEvent.facultyAdvisor}</span>
+                                🎓 <strong>Faculty Advisor:</strong> <span style={{ color: '#0f172a' }}>{selectedEvent.facultyAdvisor}</span>
                               </div>
                             )}
                             <div>
-                              📍 <strong>Venue:</strong> <span style={{ color: '#0f172a' }}>{selectedCompletedEvent.venue}</span>
+                              📍 <strong>Venue:</strong> <span style={{ color: '#0f172a' }}>{selectedEvent.venue}</span>
                             </div>
                             <div>
-                              📅 <strong>Event Date:</strong> <span style={{ color: '#0f172a' }}>{new Date(selectedCompletedEvent.startDateTime).toLocaleDateString()} ({new Date(selectedCompletedEvent.startDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})</span>
+                              📅 <strong>Event Date:</strong> <span style={{ color: '#0f172a' }}>{new Date(selectedEvent.startDateTime).toLocaleDateString()} ({new Date(selectedEvent.startDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})</span>
                             </div>
                           </div>
                         </div>
+                      </div>
+
+                      {/* Admin Read-Only Notice */}
+                      <div style={{
+                        padding: '10px 16px',
+                        borderRadius: 10,
+                        background: 'rgba(99, 102, 241, 0.08)',
+                        border: '1px solid rgba(99, 102, 241, 0.25)',
+                        color: '#3730a3',
+                        fontSize: '0.85rem',
+                        fontWeight: 600,
+                        marginBottom: 20,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8
+                      }}>
+                        <ShieldAlert size={17} color="#4f46e5" />
+                        <span>
+                          🛡️ <strong>Administrative Oversight:</strong> Live attendance is recorded exclusively by the club organizer at the venue during the ongoing phase. Administrators have read-only audit visibility into all attendee records.
+                        </span>
                       </div>
 
                       {/* Brief Stats Dashboard Counters */}
@@ -844,7 +986,7 @@ export default function AdminPage({ user, onRefresh }) {
                           <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f172a', marginTop: 2 }}>
                             {registeredAttendees.length}
                           </div>
-                          <div style={{ fontSize: '0.76rem', color: '#64748b' }}>Capacity: {selectedCompletedEvent.maxParticipants}</div>
+                          <div style={{ fontSize: '0.76rem', color: '#64748b' }}>Capacity: {selectedEvent.maxParticipants}</div>
                         </div>
 
                         <div style={{ background: 'rgba(236, 253, 245, 0.9)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: 14, padding: 14 }}>
@@ -860,7 +1002,7 @@ export default function AdminPage({ user, onRefresh }) {
                           <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#dc2626', marginTop: 2 }}>
                             {absentAttendeeCount}
                           </div>
-                          <div style={{ fontSize: '0.76rem', color: '#dc2626' }}>Registered but missed</div>
+                          <div style={{ fontSize: '0.76rem', color: '#dc2626' }}>Registered but absent</div>
                         </div>
 
                         <div style={{ background: 'rgba(245, 243, 255, 0.9)', border: '1px solid rgba(124, 58, 237, 0.3)', borderRadius: 14, padding: 14 }}>
@@ -875,7 +1017,7 @@ export default function AdminPage({ user, onRefresh }) {
                       </div>
 
                       {/* Organizer's Description & Requirements Box */}
-                      {(selectedCompletedEvent.description || selectedCompletedEvent.requirements) && (
+                      {(selectedEvent.description || selectedEvent.requirements) && (
                         <div style={{
                           background: 'rgba(248, 250, 252, 0.9)',
                           border: '1px solid rgba(226, 232, 240, 0.9)',
@@ -883,12 +1025,12 @@ export default function AdminPage({ user, onRefresh }) {
                           padding: 16,
                           marginBottom: 24
                         }}>
-                          {selectedCompletedEvent.description && (
-                            <p style={{ fontSize: '0.9rem', color: '#334155', lineHeight: 1.55, marginBottom: selectedCompletedEvent.requirements ? 12 : 0 }}>
-                              <strong>Event Overview:</strong> {selectedCompletedEvent.description}
+                          {selectedEvent.description && (
+                            <p style={{ fontSize: '0.9rem', color: '#334155', lineHeight: 1.55, marginBottom: selectedEvent.requirements ? 12 : 0 }}>
+                              <strong>Event Overview:</strong> {selectedEvent.description}
                             </p>
                           )}
-                          {selectedCompletedEvent.requirements && (
+                          {selectedEvent.requirements && (
                             <div style={{
                               background: 'rgba(99, 102, 241, 0.08)',
                               border: '1px solid rgba(99, 102, 241, 0.25)',
@@ -900,7 +1042,7 @@ export default function AdminPage({ user, onRefresh }) {
                                 <FileText size={15} /> Requirements Specified by Organizer:
                               </div>
                               <div style={{ color: '#1e293b', whiteSpace: 'pre-wrap' }}>
-                                {selectedCompletedEvent.requirements}
+                                {selectedEvent.requirements}
                               </div>
                             </div>
                           )}
@@ -908,7 +1050,7 @@ export default function AdminPage({ user, onRefresh }) {
                       )}
 
                       {/* Declared Honors & Winners (if any) */}
-                      {completedWinners.length > 0 && (
+                      {eventWinners.length > 0 && (
                         <div style={{
                           background: 'linear-gradient(135deg, rgba(254, 243, 199, 0.8), rgba(253, 230, 138, 0.6))',
                           border: '1.5px solid rgba(245, 158, 11, 0.35)',
@@ -920,7 +1062,7 @@ export default function AdminPage({ user, onRefresh }) {
                             <Award size={18} color="#d97706" /> Declared Event Winners (Awarded by Organizer):
                           </div>
                           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                            {completedWinners.map(w => (
+                            {eventWinners.map(w => (
                               <div key={w.studentId} style={{ background: '#fff', borderRadius: 10, padding: '8px 14px', border: '1px solid rgba(245, 158, 11, 0.3)', fontSize: '0.86rem' }}>
                                 <strong style={{ color: '#b45309' }}>#{w.position} Place</strong> ({w.prize}):{' '}
                                 <span style={{ fontWeight: 600, color: '#0f172a' }}>{w.studentName}</span> ({w.studentId})
@@ -972,7 +1114,7 @@ export default function AdminPage({ user, onRefresh }) {
                                   cursor: 'pointer'
                                 }}
                               >
-                                {tab === 'Present' ? `Present (${verifiedAttendedCount})` : tab === 'Absent' ? `Absent (${absentAttendeeCount})` : `All (${completedRegistrations.length})`}
+                                {tab === 'Present' ? `Present (${verifiedAttendedCount})` : tab === 'Absent' ? `Absent (${absentAttendeeCount})` : `All (${eventRegistrations.length})`}
                               </button>
                             ))}
                           </div>
@@ -982,7 +1124,7 @@ export default function AdminPage({ user, onRefresh }) {
                       {/* Attendee Roster Table */}
                       {filteredAttendees.length === 0 ? (
                         <div style={{ padding: 24, textAlign: 'center', color: '#64748b', fontSize: '0.88rem' }}>
-                          No students found matching your search.
+                          No registered students match this search.
                         </div>
                       ) : (
                         <div style={{ overflowX: 'auto', border: '1px solid rgba(226, 232, 240, 0.9)', borderRadius: 12 }}>
@@ -1033,13 +1175,13 @@ export default function AdminPage({ user, onRefresh }) {
                       )}
 
                       {/* Student Feedback Reviews Section */}
-                      {completedFeedback.length > 0 && (
+                      {eventFeedback.length > 0 && (
                         <div style={{ marginTop: 24, paddingTop: 18, borderTop: '1px solid rgba(226, 232, 240, 0.9)' }}>
                           <h4 style={{ fontSize: '1rem', color: '#0f172a', fontWeight: 800, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <MessageSquare size={16} color="#4f46e5" /> Student Feedback & Ratings ({completedFeedback.length})
+                            <MessageSquare size={16} color="#4f46e5" /> Student Feedback & Ratings ({eventFeedback.length})
                           </h4>
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
-                            {completedFeedback.map((fb, idx) => (
+                            {eventFeedback.map((fb, idx) => (
                               <div key={idx} style={{ background: '#f8fafc', padding: 12, borderRadius: 10, border: '1px solid #e2e8f0', fontSize: '0.84rem' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                                   <strong style={{ color: '#0f172a' }}>{fb.studentName}</strong>

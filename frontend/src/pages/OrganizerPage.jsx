@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   Users, Plus, Calendar, CheckSquare, Award, AlertTriangle, 
   MapPin, Clock, CheckCircle, ShieldAlert, Search, FileText, 
-  Check, ArrowRight, Sparkles, Filter, ChevronRight, RefreshCw, X
+  Check, ArrowRight, Sparkles, Filter, ChevronRight, RefreshCw, X,
+  Upload, ExternalLink, File
 } from 'lucide-react';
 import { api } from '../api/client';
 
@@ -49,27 +50,38 @@ export default function OrganizerPage({ user, onRefresh }) {
   const [winner2, setWinner2] = useState('');
   const [winner3, setWinner3] = useState('');
 
-  // Load user's clubs
+  // Certificate Issuing state
+  const [showCertificateModal, setShowCertificateModal] = useState(false);
+  const [attendeeCertificates, setAttendeeCertificates] = useState([]);
+  const [loadingCertAttendees, setLoadingCertAttendees] = useState(false);
+  const [selectedAttendeeForUpload, setSelectedAttendeeForUpload] = useState(null);
+  const [uploadFile, setUploadFile] = useState(null);
+  const [uploadCertType, setUploadCertType] = useState('Participation');
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [certSearchQuery, setCertSearchQuery] = useState('');
+
+  // Load user's clubs - strictly restricted to clubs the user is President or Organizer of
   useEffect(() => {
     async function loadClubs() {
       try {
         const res = await api.getClubs('Approved');
         const allClubs = res.clubs || [];
-        setClubs(allClubs);
 
-        // Auto-select user's managed club if they have one
-        let defaultClubId = '';
+        // Scoping: Organizers can only access clubs they officially lead
+        let organizerClubs = allClubs;
         if (user && user.role !== 'Admin') {
-          const userClubIds = [
+          const userClubIds = new Set([
             ...(user.presidentClubs || []),
-            ...(user.clubMemberships?.filter(m => m.role === 'President' || m.role === 'Organizer').map(m => m.clubId) || [])
-          ];
-          if (userClubIds.length > 0) {
-            defaultClubId = userClubIds[0];
-          }
+            ...(user.clubMemberships?.filter(m => ['President', 'Organizer', 'Lead', 'Core Member'].includes(m.role)).map(m => m.clubId) || [])
+          ]);
+          organizerClubs = allClubs.filter(c => userClubIds.has(c.clubId));
         }
-        if (!defaultClubId && allClubs.length > 0) {
-          defaultClubId = allClubs[0].clubId;
+
+        setClubs(organizerClubs);
+
+        let defaultClubId = '';
+        if (organizerClubs.length > 0) {
+          defaultClubId = organizerClubs[0].clubId;
         }
 
         setSelectedClubId(defaultClubId);
@@ -189,8 +201,24 @@ export default function OrganizerPage({ user, onRefresh }) {
     }
   };
 
+  const isEventOngoingNow = () => {
+    if (!selectedEvent || selectedEvent.status !== 'Approved') return false;
+    const now = new Date();
+    const start = new Date(selectedEvent.startDateTime);
+    const end = selectedEvent.endDateTime ? new Date(selectedEvent.endDateTime) : null;
+    return now >= start && (!end || now <= end);
+  };
+
   const handleMarkAttendance = async (studentId) => {
     if (!studentId) return;
+    if (user?.role === 'Admin') {
+      alert('Administrators cannot mark attendance. Attendance must be taken by the event organizer during the ongoing phase.');
+      return;
+    }
+    if (!isEventOngoingNow()) {
+      alert('Attendance can ONLY be taken during the ongoing phase (between event start and end time).');
+      return;
+    }
     try {
       await api.markAttendance(selectedEventId, [studentId]);
       setStatusMessage({ type: 'success', text: `Attendance checked in for student ${studentId}!` });
@@ -204,6 +232,14 @@ export default function OrganizerPage({ user, onRefresh }) {
 
   const handleUnmarkAttendance = async (studentId) => {
     if (!studentId) return;
+    if (user?.role === 'Admin') {
+      alert('Administrators cannot modify attendance.');
+      return;
+    }
+    if (!isEventOngoingNow()) {
+      alert('Attendance can ONLY be modified during the ongoing phase.');
+      return;
+    }
     try {
       await api.unmarkAttendance(selectedEventId, studentId);
       setStatusMessage({ type: 'info', text: `Attendance unmarked for student ${studentId}.` });
@@ -217,6 +253,14 @@ export default function OrganizerPage({ user, onRefresh }) {
   const handleQuickCheckInSubmit = (e) => {
     e.preventDefault();
     if (!quickStudentId.trim()) return;
+    if (user?.role === 'Admin') {
+      alert('Administrators cannot mark attendance.');
+      return;
+    }
+    if (!isEventOngoingNow()) {
+      alert('Attendance check-in is ONLY permitted during the live ongoing phase.');
+      return;
+    }
     // Find matching student
     const match = registrations.find(r => 
       r.studentId?.toLowerCase() === quickStudentId.trim().toLowerCase() ||
@@ -235,6 +279,14 @@ export default function OrganizerPage({ user, onRefresh }) {
   };
 
   const handleMarkAllAttendance = async () => {
+    if (user?.role === 'Admin') {
+      alert('Administrators cannot mark attendance.');
+      return;
+    }
+    if (!isEventOngoingNow()) {
+      alert('Attendance can ONLY be taken during the ongoing phase (between event start and end time).');
+      return;
+    }
     const unAttendedIds = registrations.filter(r => r.status === 'Registered' && !r.attended).map(r => r.studentId);
     if (unAttendedIds.length === 0) {
       alert('All registered students are already marked present.');
@@ -253,25 +305,96 @@ export default function OrganizerPage({ user, onRefresh }) {
     }
   };
 
-  const handleGenerateCertificates = async () => {
+  const openCertificateModal = () => {
+    setShowCertificateModal(true);
+    setSelectedAttendeeForUpload(null);
+    setUploadFile(null);
+    loadAttendeeCertificates();
+  };
+
+  const loadAttendeeCertificates = async () => {
+    if (!selectedEventId) return;
     try {
-      const res = await api.generateCertificates(selectedEventId);
-      setStatusMessage({ type: 'success', text: `Issued ${res.count} verifiable certificates in Neo4j with unique SHA-256 hashes!` });
+      setLoadingCertAttendees(true);
+      const res = await api.getEventAttendeesWithCertificates(selectedEventId);
+      setAttendeeCertificates(res.attendees || []);
     } catch (err) {
-      alert(err.message);
+      console.error('Error fetching attendees with certificates:', err);
+      const fallback = registrations.filter(r => r.attended).map(r => ({
+        studentId: r.studentId,
+        studentName: r.studentName,
+        email: r.email,
+        department: r.department,
+        attendedAt: r.attendedAt,
+        wonPosition: r.wonPosition,
+        wonPrize: r.wonPrize
+      }));
+      setAttendeeCertificates(fallback);
+    } finally {
+      setLoadingCertAttendees(false);
     }
   };
 
-  const handleCompleteEvent = async () => {
-    if (!window.confirm('Are you sure you want to mark this event as Completed? This marks the event lifecycle complete in Neo4j.')) {
+  const handleSelectAttendeeForUpload = (attendee) => {
+    setSelectedAttendeeForUpload(attendee);
+    setUploadFile(null);
+    setUploadCertType(attendee.wonPosition ? 'Winner' : 'Participation');
+  };
+
+  const handleUploadCertificate = async (e) => {
+    e.preventDefault();
+    if (!selectedAttendeeForUpload) return;
+    if (!uploadFile) {
+      alert('Please choose a certificate file (.pdf, .png, .jpg) to upload.');
       return;
     }
+
     try {
-      await api.completeEvent(selectedEventId);
-      setStatusMessage({ type: 'success', text: 'Event marked as Completed successfully!' });
-      await loadClubEvents(selectedClubId);
+      setUploadLoading(true);
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const base64Data = reader.result;
+          await api.uploadStudentCertificate(selectedEventId, selectedAttendeeForUpload.studentId, {
+            fileData: base64Data,
+            fileName: uploadFile.name,
+            fileType: uploadFile.type,
+            type: uploadCertType
+          });
+          setStatusMessage({
+            type: 'success',
+            text: `Certificate successfully issued and uploaded for ${selectedAttendeeForUpload.studentName}!`
+          });
+          setUploadFile(null);
+          setSelectedAttendeeForUpload(null);
+          await loadAttendeeCertificates();
+        } catch (err) {
+          alert(`Upload error: ${err.message}`);
+        } finally {
+          setUploadLoading(false);
+        }
+      };
+      reader.onerror = () => {
+        alert('Could not read file from disk.');
+        setUploadLoading(false);
+      };
+      reader.readAsDataURL(uploadFile);
     } catch (err) {
       alert(err.message);
+      setUploadLoading(false);
+    }
+  };
+
+  const handleBatchIssueStandard = async () => {
+    try {
+      setUploadLoading(true);
+      const res = await api.generateCertificates(selectedEventId);
+      setStatusMessage({ type: 'success', text: `Generated standard verifiable certificates for ${res.count} attendees!` });
+      await loadAttendeeCertificates();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setUploadLoading(false);
     }
   };
 
@@ -709,24 +832,30 @@ export default function OrganizerPage({ user, onRefresh }) {
                     const eventEnd = selectedEvent.endDateTime ? new Date(selectedEvent.endDateTime) : null;
                     const isStarted = now >= eventStart;
                     const isEnded = selectedEvent.status === 'Completed' || (eventEnd && now >= eventEnd);
+                    const isOngoing = selectedEvent.status === 'Approved' && isStarted && !isEnded;
 
-                    if (selectedEvent.status === 'Completed') {
+                    if (selectedEvent.status === 'Completed' || isEnded) {
                       return (
                         <div style={{
-                          padding: '10px 14px',
-                          borderRadius: 10,
+                          padding: '12px 16px',
+                          borderRadius: 12,
                           background: 'rgba(147, 51, 234, 0.1)',
-                          border: '1.5px solid rgba(147, 51, 234, 0.3)',
+                          border: '1.5px solid rgba(147, 51, 234, 0.35)',
                           color: '#6b21a8',
-                          fontSize: '0.86rem',
+                          fontSize: '0.88rem',
                           fontWeight: 600,
-                          marginBottom: 12,
+                          marginBottom: 14,
                           display: 'flex',
                           alignItems: 'center',
-                          gap: 8
+                          gap: 10
                         }}>
-                          <CheckCircle size={17} color="#9333ea" />
-                          <span>Event Completed! Final attendance numbers and stats are recorded and synced to Campus Administration.</span>
+                          <CheckCircle size={19} color="#9333ea" style={{ flexShrink: 0 }} />
+                          <div>
+                            <strong>🏁 Event Concluded (Completed Automatically)</strong>
+                            <div style={{ fontSize: '0.82rem', color: '#7e22ce', marginTop: 2 }}>
+                              The event deadline has occurred and the event concluded automatically. You can decide winners and issue certificates below at any time. Attendance check-in is closed.
+                            </div>
+                          </div>
                         </div>
                       );
                     }
@@ -734,68 +863,54 @@ export default function OrganizerPage({ user, onRefresh }) {
                     if (selectedEvent.status === 'Approved' && !isStarted) {
                       return (
                         <div style={{
-                          padding: '10px 14px',
-                          borderRadius: 10,
+                          padding: '12px 16px',
+                          borderRadius: 12,
                           background: 'rgba(59, 130, 246, 0.1)',
-                          border: '1.5px solid rgba(59, 130, 246, 0.3)',
+                          border: '1.5px solid rgba(59, 130, 246, 0.35)',
                           color: '#1d4ed8',
-                          fontSize: '0.86rem',
+                          fontSize: '0.88rem',
                           fontWeight: 600,
-                          marginBottom: 12,
+                          marginBottom: 14,
                           display: 'flex',
                           alignItems: 'center',
-                          gap: 8
+                          gap: 10
                         }}>
-                          <Clock size={17} color="#2563eb" />
-                          <span>
-                            Upcoming Event — Starts on <strong>{eventStart.toLocaleString()}</strong>. When the event starts, you can manually mention and mark attendees below (early check-in also permitted).
-                          </span>
+                          <Clock size={19} color="#2563eb" style={{ flexShrink: 0 }} />
+                          <div>
+                            <strong>⏳ Upcoming Event (Registration Phase)</strong>
+                            <div style={{ fontSize: '0.82rem', color: '#1e40af', marginTop: 2 }}>
+                              Event starts on <strong>{eventStart.toLocaleString()}</strong>. Attendance check-in is <strong>LOCKED</strong>. Per campus rules, organizers can ONLY take attendance while the event is actively ongoing.
+                            </div>
+                          </div>
                         </div>
                       );
                     }
 
-                    if (selectedEvent.status === 'Approved' && isStarted && !isEnded) {
+                    if (isOngoing) {
                       return (
                         <div style={{
-                          padding: '10px 14px',
-                          borderRadius: 10,
+                          padding: '12px 16px',
+                          borderRadius: 12,
                           background: 'rgba(16, 185, 129, 0.12)',
-                          border: '1.5px solid rgba(16, 185, 129, 0.35)',
+                          border: '1.5px solid rgba(16, 185, 129, 0.4)',
                           color: '#065f46',
-                          fontSize: '0.86rem',
+                          fontSize: '0.88rem',
                           fontWeight: 700,
-                          marginBottom: 12,
+                          marginBottom: 14,
                           display: 'flex',
                           alignItems: 'center',
-                          gap: 8
+                          gap: 10
                         }}>
-                          <Sparkles size={17} color="#059669" />
-                          <span>
-                            🔴 Event In Progress! Event started at {eventStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}. Mention and mark attending students manually below.
-                          </span>
-                        </div>
-                      );
-                    }
-
-                    if (selectedEvent.status === 'Approved' && isEnded) {
-                      return (
-                        <div style={{
-                          padding: '10px 14px',
-                          borderRadius: 10,
-                          background: 'rgba(245, 158, 11, 0.12)',
-                          border: '1.5px solid rgba(245, 158, 11, 0.35)',
-                          color: '#b45309',
-                          fontSize: '0.86rem',
-                          fontWeight: 600,
-                          marginBottom: 12,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 8
-                        }}>
-                          <CheckSquare size={17} color="#d97706" />
-                          <span>
-                            🏁 Event Schedule Concluded — Finalize manual attendance and declare any winners, then click <strong>"Complete Event"</strong> to submit the final records to Admin.
-                          </span>
+                          <Sparkles size={19} color="#059669" style={{ flexShrink: 0 }} />
+                          <div>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#dc2626', display: 'inline-block' }}></span>
+                              <strong>LIVE ONGOING PHASE</strong>
+                            </span>
+                            <div style={{ fontSize: '0.82rem', color: '#047857', fontWeight: 500, marginTop: 2 }}>
+                              Event is actively in progress! You can now mark registered students present manually or using Quick Check-In below. Attendance closes at {eventEnd ? eventEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'event completion'}.
+                            </div>
+                          </div>
                         </div>
                       );
                     }
@@ -813,20 +928,30 @@ export default function OrganizerPage({ user, onRefresh }) {
 
                 {/* Organizer Operation Actions */}
                 <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                  <button className="btn btn-secondary" onClick={handleMarkAllAttendance}>
-                    <CheckSquare size={16} /> Mark All Present
-                  </button>
+                  {(() => {
+                    const isOngoing = isEventOngoingNow();
+                    const canMark = isOngoing && user?.role !== 'Admin';
+                    return (
+                      <button 
+                        className="btn btn-secondary" 
+                        onClick={handleMarkAllAttendance}
+                        disabled={!canMark}
+                        style={{
+                          opacity: canMark ? 1 : 0.5,
+                          cursor: canMark ? 'pointer' : 'not-allowed'
+                        }}
+                        title={!canMark ? (user?.role === 'Admin' ? 'Admins cannot mark attendance' : 'Attendance can ONLY be taken during the ongoing phase') : 'Mark all remaining students present'}
+                      >
+                        <CheckSquare size={16} /> Mark All Present
+                      </button>
+                    );
+                  })()}
                   <button className="btn btn-secondary" onClick={() => setShowWinnerModal(true)}>
                     <Award size={16} /> Declare Winners
                   </button>
-                  <button className="btn btn-primary" onClick={handleGenerateCertificates} style={{ background: '#10b981' }}>
-                    <CheckCircle size={16} /> Issue Certificates
+                  <button className="btn btn-primary" onClick={openCertificateModal} style={{ background: '#10b981' }}>
+                    <Award size={16} /> Issue Certificates
                   </button>
-                  {selectedEvent.status === 'Approved' && (
-                    <button className="btn btn-outline-danger" onClick={handleCompleteEvent}>
-                      🏁 Complete Event
-                    </button>
-                  )}
                 </div>
               </div>
 
@@ -888,20 +1013,32 @@ export default function OrganizerPage({ user, onRefresh }) {
                 marginBottom: 20
               }}>
                 {/* Quick Student ID Check-In */}
-                <form onSubmit={handleQuickCheckInSubmit} style={{ display: 'flex', gap: 8, flex: 1, minWidth: 320, maxWidth: 500 }}>
-                  <div style={{ position: 'relative', flex: 1 }}>
-                    <input 
-                      type="text" 
-                      placeholder="Fast Check-In: Enter Student ID (e.g. stud-001) or Name..." 
-                      value={quickStudentId}
-                      onChange={(e) => setQuickStudentId(e.target.value)}
-                      style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: '0.88rem' }}
-                    />
-                  </div>
-                  <button type="submit" className="btn btn-primary" style={{ padding: '10px 18px', fontSize: '0.88rem', background: '#10b981' }}>
-                    <Check size={16} /> Check In
-                  </button>
-                </form>
+                {(() => {
+                  const isOngoing = isEventOngoingNow();
+                  const canMark = isOngoing && user?.role !== 'Admin';
+                  return (
+                    <form onSubmit={handleQuickCheckInSubmit} style={{ display: 'flex', gap: 8, flex: 1, minWidth: 320, maxWidth: 500 }}>
+                      <div style={{ position: 'relative', flex: 1 }}>
+                        <input 
+                          type="text" 
+                          placeholder={!canMark ? (user?.role === 'Admin' ? "Attendance read-only for Administrators" : "Check-in locked (available only during ongoing phase)...") : "Fast Check-In: Enter Student ID (e.g. stud-001) or Name..."} 
+                          value={quickStudentId}
+                          onChange={(e) => setQuickStudentId(e.target.value)}
+                          disabled={!canMark}
+                          style={{ width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: '0.88rem', opacity: canMark ? 1 : 0.6 }}
+                        />
+                      </div>
+                      <button 
+                        type="submit" 
+                        className="btn btn-primary" 
+                        disabled={!canMark}
+                        style={{ padding: '10px 18px', fontSize: '0.88rem', background: '#10b981', opacity: canMark ? 1 : 0.5, cursor: canMark ? 'pointer' : 'not-allowed' }}
+                      >
+                        <Check size={16} /> Check In
+                      </button>
+                    </form>
+                  );
+                })()}
 
                 {/* Table Filter Pills & Search */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -962,68 +1099,85 @@ export default function OrganizerPage({ user, onRefresh }) {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredRegistrations.map(r => (
-                        <tr key={r.studentId} style={{ borderBottom: '1px solid rgba(226, 232, 240, 0.7)' }}>
-                          <td style={{ padding: '12px 14px', fontWeight: 600, color: '#0f172a' }}>
-                            {r.studentName}
-                            <div style={{ fontSize: '0.76rem', color: '#64748b', fontWeight: 400 }}>{r.studentId} • {r.email}</div>
-                          </td>
-                          <td style={{ padding: '12px 14px', color: '#475569' }}>{r.department} (Yr {r.year})</td>
-                          <td style={{ padding: '12px 14px' }}>
-                            <span className={`badge ${r.status === 'Registered' ? 'badge-success' : 'badge-warning'}`}>
-                              {r.status}
-                            </span>
-                          </td>
-                          <td style={{ padding: '12px 14px', color: '#7e22ce', fontWeight: 600 }}>{r.teamName || '—'}</td>
-                          <td style={{ padding: '12px 14px' }}>
-                            {r.attended ? (
-                              <span className="badge badge-success" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                                <CheckCircle size={12} /> Present {r.attendedAt ? `(${new Date(r.attendedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})` : ''}
+                      {filteredRegistrations.map(r => {
+                        const isOngoing = isEventOngoingNow();
+                        const canMark = isOngoing && user?.role !== 'Admin';
+
+                        return (
+                          <tr key={r.studentId} style={{ borderBottom: '1px solid rgba(226, 232, 240, 0.7)' }}>
+                            <td style={{ padding: '12px 14px', fontWeight: 600, color: '#0f172a' }}>
+                              {r.studentName}
+                              <div style={{ fontSize: '0.76rem', color: '#64748b', fontWeight: 400 }}>{r.studentId} • {r.email}</div>
+                            </td>
+                            <td style={{ padding: '12px 14px', color: '#475569' }}>{r.department} (Yr {r.year})</td>
+                            <td style={{ padding: '12px 14px' }}>
+                              <span className={`badge ${r.status === 'Registered' ? 'badge-success' : 'badge-warning'}`}>
+                                {r.status}
                               </span>
-                            ) : (
-                              <span style={{ color: '#64748b', fontSize: '0.82rem' }}>Absent</span>
-                            )}
-                          </td>
-                          <td style={{ padding: '12px 14px' }}>
-                            {r.wonPosition ? (
-                              <span className="badge badge-warning">#{r.wonPosition} ({r.wonPrize})</span>
-                            ) : '—'}
-                          </td>
-                          <td style={{ padding: '12px 14px', textAlign: 'right' }}>
-                            {!r.attended && r.status === 'Registered' ? (
-                              <button 
-                                className="btn btn-secondary"
-                                style={{ padding: '6px 14px', fontSize: '0.8rem', background: '#10b981', color: '#fff', border: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
-                                onClick={() => handleMarkAttendance(r.studentId)}
-                              >
-                                <Check size={14} /> Mark Present
-                              </button>
-                            ) : r.attended ? (
-                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                                <span style={{ color: '#059669', fontSize: '0.82rem', fontWeight: 700 }}>Present ✓</span>
-                                {selectedEvent.status !== 'Completed' && (
-                                  <button
-                                    onClick={() => handleUnmarkAttendance(r.studentId)}
-                                    style={{
-                                      background: 'rgba(239, 68, 68, 0.08)',
-                                      border: '1px solid rgba(239, 68, 68, 0.3)',
-                                      color: '#dc2626',
-                                      borderRadius: 6,
-                                      padding: '3px 8px',
-                                      fontSize: '0.72rem',
-                                      cursor: 'pointer',
-                                      fontWeight: 600
-                                    }}
-                                    title="Unmark attendance (set Absent)"
+                            </td>
+                            <td style={{ padding: '12px 14px', color: '#7e22ce', fontWeight: 600 }}>{r.teamName || '—'}</td>
+                            <td style={{ padding: '12px 14px' }}>
+                              {r.attended ? (
+                                <span className="badge badge-success" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                  <CheckCircle size={12} /> Present {r.attendedAt ? `(${new Date(r.attendedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})` : ''}
+                                </span>
+                              ) : (
+                                <span className="badge" style={{ background: 'rgba(100, 116, 139, 0.12)', color: '#64748b', fontSize: '0.78rem' }}>
+                                  Awaiting Check-In
+                                </span>
+                              )}
+                            </td>
+                            <td style={{ padding: '12px 14px' }}>
+                              {r.wonPosition ? (
+                                <span className="badge badge-warning">#{r.wonPosition} ({r.wonPrize})</span>
+                              ) : '—'}
+                            </td>
+                            <td style={{ padding: '12px 14px', textAlign: 'right' }}>
+                              {canMark ? (
+                                !r.attended && r.status === 'Registered' ? (
+                                  <button 
+                                    className="btn btn-secondary"
+                                    style={{ padding: '6px 14px', fontSize: '0.8rem', background: '#10b981', color: '#fff', border: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                                    onClick={() => handleMarkAttendance(r.studentId)}
                                   >
-                                    Mark Absent
+                                    <Check size={14} /> Mark Present
                                   </button>
-                                )}
-                              </div>
-                            ) : null}
-                          </td>
-                        </tr>
-                      ))}
+                                ) : r.attended ? (
+                                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                                    <span style={{ color: '#059669', fontSize: '0.82rem', fontWeight: 700 }}>Present ✓</span>
+                                    {selectedEvent.status !== 'Completed' && (
+                                      <button
+                                        onClick={() => handleUnmarkAttendance(r.studentId)}
+                                        style={{
+                                          background: 'rgba(239, 68, 68, 0.08)',
+                                          border: '1px solid rgba(239, 68, 68, 0.3)',
+                                          color: '#dc2626',
+                                          borderRadius: 6,
+                                          padding: '3px 8px',
+                                          fontSize: '0.72rem',
+                                          cursor: 'pointer',
+                                          fontWeight: 600
+                                        }}
+                                        title="Unmark attendance (set Absent)"
+                                      >
+                                        Mark Absent
+                                      </button>
+                                    )}
+                                  </div>
+                                ) : null
+                              ) : (
+                                r.attended ? (
+                                  <span style={{ color: '#059669', fontSize: '0.82rem', fontWeight: 700 }}>Present ✓</span>
+                                ) : (
+                                  <span style={{ color: '#94a3b8', fontSize: '0.78rem', background: 'rgba(148, 163, 184, 0.12)', padding: '4px 8px', borderRadius: 6 }}>
+                                    Check-in Locked
+                                  </span>
+                                )
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -1233,8 +1387,14 @@ export default function OrganizerPage({ user, onRefresh }) {
           <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520, padding: 30 }}>
             <h2 style={{ fontSize: '1.4rem', marginBottom: 8 }}>Declare Event Winners</h2>
             <p style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: 18 }}>
-              Award official distinctions. Only verified attendees who were checked in are eligible.
+              Award official distinctions. Winners can be decided anytime during or after the event from verified attendees.
             </p>
+
+            {registrations.filter(r => r.attended).length === 0 ? (
+              <div style={{ padding: 14, background: 'rgba(239, 68, 68, 0.08)', borderRadius: 12, border: '1px solid rgba(239, 68, 68, 0.25)', color: '#b91c1c', fontSize: '0.86rem', marginBottom: 16 }}>
+                ⚠️ No verified attendees found yet. Winners can be awarded to any student who attended the event.
+              </div>
+            ) : null}
 
             <form onSubmit={handleDeclareWinners} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
@@ -1278,6 +1438,305 @@ export default function OrganizerPage({ user, onRefresh }) {
                 <button type="button" className="btn btn-secondary" onClick={() => setShowWinnerModal(false)}>Cancel</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Issue Certificates (Attendees List & File Upload) */}
+      {showCertificateModal && (
+        <div className="modal-overlay" onClick={() => setShowCertificateModal(false)}>
+          <div 
+            className="modal-content" 
+            onClick={(e) => e.stopPropagation()} 
+            style={{ maxWidth: 860, width: '92%', maxHeight: '88vh', overflowY: 'auto', padding: 32 }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+              <div>
+                <h2 style={{ fontSize: '1.45rem', color: '#0f172a', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Award size={24} color="#d97706" /> Issue Certificates to Event Attendees
+                </h2>
+                <p style={{ fontSize: '0.88rem', color: '#64748b', marginTop: 4 }}>
+                  Below are the students who attended <strong>"{selectedEvent?.name}"</strong>. Click on any student's name to attach their certificate file.
+                </p>
+              </div>
+              <button 
+                onClick={() => setShowCertificateModal(false)}
+                style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer', padding: 4 }}
+              >
+                <X size={22} />
+              </button>
+            </div>
+
+            {/* Active Upload Panel for Selected Student */}
+            {selectedAttendeeForUpload && (
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(238, 242, 255, 0.95), rgba(245, 243, 255, 0.95))',
+                border: '1.5px solid rgba(99, 102, 241, 0.4)',
+                borderRadius: 16,
+                padding: 24,
+                marginBottom: 24,
+                boxShadow: '0 8px 24px rgba(99, 102, 241, 0.12)'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                  <div>
+                    <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#4f46e5', fontWeight: 800, letterSpacing: '0.04em' }}>
+                      Attaching Certificate File
+                    </span>
+                    <h3 style={{ fontSize: '1.25rem', color: '#0f172a', fontWeight: 800, marginTop: 2 }}>
+                      {selectedAttendeeForUpload.studentName}
+                    </h3>
+                    <div style={{ fontSize: '0.82rem', color: '#64748b' }}>
+                      ID: {selectedAttendeeForUpload.studentId} • {selectedAttendeeForUpload.email} • {selectedAttendeeForUpload.department}
+                    </div>
+                  </div>
+                  <button 
+                    type="button" 
+                    onClick={() => setSelectedAttendeeForUpload(null)}
+                    style={{ background: 'transparent', border: 'none', color: '#64748b', cursor: 'pointer' }}
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+
+                <form onSubmit={handleUploadCertificate}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 16 }}>
+                    <div>
+                      <label style={{ fontSize: '0.84rem', color: '#334155', fontWeight: 700, display: 'block', marginBottom: 6 }}>
+                        Certificate Category
+                      </label>
+                      <select 
+                        value={uploadCertType} 
+                        onChange={(e) => setUploadCertType(e.target.value)}
+                        style={{ width: '100%', padding: '10px 12px', borderRadius: 10, fontSize: '0.88rem' }}
+                      >
+                        <option value="Participation">Participation Certificate</option>
+                        <option value="Winner">Winner Certificate (Excellence)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: '0.84rem', color: '#334155', fontWeight: 700, display: 'block', marginBottom: 6 }}>
+                        Select Certificate File (PDF / Image)
+                      </label>
+                      <input 
+                        type="file" 
+                        accept=".pdf,image/png,image/jpeg,image/webp" 
+                        onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                        style={{ width: '100%', padding: '8px', fontSize: '0.84rem', background: '#fff', borderRadius: 10, border: '1.5px dashed rgba(99, 102, 241, 0.4)' }}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {uploadFile && (
+                    <div style={{
+                      padding: '10px 14px',
+                      background: '#fff',
+                      borderRadius: 10,
+                      border: '1px solid rgba(226, 232, 240, 0.9)',
+                      marginBottom: 16,
+                      fontSize: '0.84rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      color: '#0f172a'
+                    }}>
+                      <File size={16} color="#4f46e5" />
+                      <span><strong>{uploadFile.name}</strong> ({(uploadFile.size / 1024).toFixed(1)} KB)</span>
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <button 
+                      type="submit" 
+                      className="btn btn-primary" 
+                      disabled={uploadLoading || !uploadFile}
+                      style={{ padding: '10px 20px', fontSize: '0.88rem', background: '#10b981', display: 'flex', alignItems: 'center', gap: 6 }}
+                    >
+                      <Upload size={16} /> {uploadLoading ? 'Uploading Certificate...' : 'Upload & Issue Certificate'}
+                    </button>
+                    <button 
+                      type="button" 
+                      className="btn btn-secondary" 
+                      onClick={() => setSelectedAttendeeForUpload(null)}
+                      style={{ padding: '10px 16px', fontSize: '0.88rem' }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* Attendees List Controls */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+              <div style={{ position: 'relative', flex: 1, minWidth: 260 }}>
+                <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
+                <input 
+                  type="text"
+                  placeholder="Filter attendees by name or ID..."
+                  value={certSearchQuery}
+                  onChange={(e) => setCertSearchQuery(e.target.value)}
+                  style={{ width: '100%', paddingLeft: 34, paddingRight: 12, paddingTop: 8, paddingBottom: 8, borderRadius: 10, fontSize: '0.84rem' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={loadAttendeeCertificates}
+                  style={{ padding: '8px 12px', fontSize: '0.82rem' }}
+                  title="Reload attendees list"
+                >
+                  <RefreshCw size={14} /> Refresh
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary" 
+                  onClick={handleBatchIssueStandard}
+                  disabled={uploadLoading}
+                  style={{ padding: '8px 14px', fontSize: '0.82rem' }}
+                  title="Auto-generates standard PDF certificates for all attendees"
+                >
+                  ⚡ Auto-Generate All Standard
+                </button>
+              </div>
+            </div>
+
+            {/* Attendees Table */}
+            {loadingCertAttendees ? (
+              <div style={{ padding: 40, textAlign: 'center', color: '#64748b' }}>Loading verified attendees...</div>
+            ) : attendeeCertificates.length === 0 ? (
+              <div style={{
+                padding: 40,
+                textAlign: 'center',
+                background: 'rgba(248, 250, 252, 0.8)',
+                borderRadius: 14,
+                border: '1px solid rgba(226, 232, 240, 0.9)'
+              }}>
+                <Award size={36} style={{ margin: '0 auto 10px', color: '#94a3b8' }} />
+                <h4 style={{ fontSize: '1.05rem', color: '#0f172a', fontWeight: 700 }}>No Checked-In Attendees Yet</h4>
+                <p style={{ fontSize: '0.85rem', color: '#64748b', marginTop: 4 }}>
+                  Certificates can only be issued to students marked <strong>Present</strong> during the event.
+                </p>
+              </div>
+            ) : (
+              <div style={{ border: '1px solid rgba(226, 232, 240, 0.9)', borderRadius: 12, overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
+                  <thead>
+                    <tr style={{ background: 'rgba(248, 250, 252, 0.9)', borderBottom: '1.5px solid rgba(226, 232, 240, 0.9)', color: '#64748b' }}>
+                      <th style={{ padding: '12px 14px' }}>Participant Name (Click to Add File)</th>
+                      <th style={{ padding: '12px 14px' }}>Department</th>
+                      <th style={{ padding: '12px 14px' }}>Attended At</th>
+                      <th style={{ padding: '12px 14px' }}>Distinction</th>
+                      <th style={{ padding: '12px 14px' }}>Certificate Status</th>
+                      <th style={{ padding: '12px 14px', textAlign: 'right' }}>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {attendeeCertificates
+                      .filter(a => {
+                        if (!certSearchQuery.trim()) return true;
+                        const q = certSearchQuery.toLowerCase();
+                        return (
+                          a.studentName?.toLowerCase().includes(q) ||
+                          a.studentId?.toLowerCase().includes(q) ||
+                          a.email?.toLowerCase().includes(q)
+                        );
+                      })
+                      .map(a => {
+                        const hasCert = !!a.certificateId;
+                        const hasCustom = a.hasCustomFile;
+
+                        return (
+                          <tr 
+                            key={a.studentId}
+                            style={{ 
+                              borderBottom: '1px solid rgba(226, 232, 240, 0.7)',
+                              background: selectedAttendeeForUpload?.studentId === a.studentId ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
+                              transition: 'background 0.15s ease'
+                            }}
+                          >
+                            <td 
+                              style={{ padding: '12px 14px', cursor: 'pointer' }}
+                              onClick={() => handleSelectAttendeeForUpload(a)}
+                              title="Click to add/replace certificate file for this student"
+                            >
+                              <div style={{ fontWeight: 700, color: '#4f46e5', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <span>{a.studentName}</span>
+                                <Upload size={13} color="#6366f1" />
+                              </div>
+                              <div style={{ fontSize: '0.76rem', color: '#64748b' }}>{a.studentId} • {a.email}</div>
+                            </td>
+                            <td style={{ padding: '12px 14px', color: '#475569' }}>
+                              {a.department} {a.year ? `(Yr ${a.year})` : ''}
+                            </td>
+                            <td style={{ padding: '12px 14px', color: '#059669', fontSize: '0.82rem', fontWeight: 600 }}>
+                              {a.attendedAt ? new Date(a.attendedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Present'}
+                            </td>
+                            <td style={{ padding: '12px 14px' }}>
+                              {a.wonPosition ? (
+                                <span className="badge badge-warning" style={{ fontSize: '0.74rem' }}>
+                                  #{a.wonPosition} ({a.wonPrize})
+                                </span>
+                              ) : (
+                                <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>Participant</span>
+                              )}
+                            </td>
+                            <td style={{ padding: '12px 14px' }}>
+                              {hasCustom ? (
+                                <div>
+                                  <span className="badge badge-success" style={{ fontSize: '0.74rem' }}>
+                                    ✓ Custom File Attached
+                                  </span>
+                                  {a.fileName && (
+                                    <div style={{ fontSize: '0.72rem', color: '#4338ca', marginTop: 3 }}>
+                                      {a.fileName}
+                                    </div>
+                                  )}
+                                </div>
+                              ) : hasCert ? (
+                                <span className="badge badge-info" style={{ fontSize: '0.74rem' }}>
+                                  ✓ Standard Issued
+                                </span>
+                              ) : (
+                                <span style={{ color: '#64748b', fontSize: '0.78rem' }}>
+                                  ⏳ Not Issued Yet
+                                </span>
+                              )}
+                            </td>
+                            <td style={{ padding: '12px 14px', textAlign: 'right' }}>
+                              <div style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                                {hasCert && a.fileUrl && (
+                                  <a 
+                                    href={a.fileUrl.startsWith('http') ? a.fileUrl : `http://localhost:5000${a.fileUrl}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="btn btn-secondary"
+                                    style={{ padding: '5px 10px', fontSize: '0.75rem', gap: 4 }}
+                                    title="View uploaded certificate file"
+                                  >
+                                    View <ExternalLink size={12} />
+                                  </a>
+                                )}
+                                <button 
+                                  type="button"
+                                  onClick={() => handleSelectAttendeeForUpload(a)}
+                                  className="btn btn-primary"
+                                  style={{ padding: '5px 12px', fontSize: '0.75rem', gap: 4, background: hasCustom ? '#4f46e5' : '#10b981' }}
+                                >
+                                  <Upload size={12} /> {hasCustom ? 'Replace File' : 'Add File'}
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       )}

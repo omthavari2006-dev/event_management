@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Award, Download, CheckCircle, ExternalLink, Calendar, ShieldCheck } from 'lucide-react';
 import { api } from '../api/client';
 
-export default function CertificatesPage({ user, onNavigateToVerify }) {
+export default function CertificatesPage({ user }) {
   const [certificates, setCertificates] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -42,7 +42,7 @@ export default function CertificatesPage({ user, onNavigateToVerify }) {
             <Award size={28} color="#d97706" /> Official Merits & Certificates
           </h1>
           <p style={{ color: '#64748b', fontSize: '0.96rem', marginTop: 4 }}>
-            Verifiable credentials issued directly through immutable graph relationships.
+            Official student credentials and certificates awarded by campus club organizers.
           </p>
         </div>
       </div>
@@ -61,7 +61,7 @@ export default function CertificatesPage({ user, onNavigateToVerify }) {
           <Award size={48} style={{ margin: '0 auto 12px', color: '#94a3b8' }} />
           <h3 style={{ fontSize: '1.25rem', color: '#0f172a', fontWeight: 700 }}>No certificates issued yet</h3>
           <p style={{ color: '#64748b', fontSize: '0.92rem', marginTop: 4 }}>
-            Attend events and win competitions to earn verified participation and excellence credentials!
+            Attend events and your club organizers will issue and attach your official certificates here!
           </p>
         </div>
       ) : (
@@ -72,6 +72,9 @@ export default function CertificatesPage({ user, onNavigateToVerify }) {
         }}>
           {certificates.map((cert) => {
             const isWinner = cert.type === 'Winner';
+            const fileDownloadUrl = cert.fileUrl 
+              ? (cert.fileUrl.startsWith('http') ? cert.fileUrl : `http://localhost:5000${cert.fileUrl}`)
+              : api.getCertificateDownloadUrl(cert.certificateId);
 
             return (
               <div 
@@ -133,24 +136,39 @@ export default function CertificatesPage({ user, onNavigateToVerify }) {
                   border: '1px solid rgba(226, 232, 240, 0.9)'
                 }}>
                   <span>Code: <strong style={{ color: '#0f172a' }}>{cert.verificationCode}</strong></span>
-                  <button 
-                    onClick={() => onNavigateToVerify(cert.verificationCode)}
-                    style={{ background: 'transparent', color: '#0284c7', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, border: 'none', fontWeight: 700 }}
-                  >
-                    Verify <ExternalLink size={13} />
-                  </button>
+                  <span style={{ color: '#059669', display: 'flex', alignItems: 'center', gap: 4, fontWeight: 700, fontSize: '0.75rem' }}>
+                    <ShieldCheck size={14} /> Official Credential
+                  </span>
                 </div>
 
-                <div style={{ display: 'flex', gap: 10 }}>
+                {cert.fileName && (
+                  <div style={{ marginBottom: 14, fontSize: '0.8rem', color: '#4338ca', background: 'rgba(99, 102, 241, 0.08)', padding: '6px 12px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>📎 <strong>File:</strong> {cert.fileName}</span>
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                   <a 
-                    href={api.getCertificateDownloadUrl(cert.certificateId)}
+                    href={fileDownloadUrl}
                     target="_blank"
                     rel="noreferrer"
                     className="btn btn-primary"
-                    style={{ flex: 1, padding: '10px', fontSize: '0.88rem' }}
+                    style={{ flex: 1, padding: '10px', fontSize: '0.88rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                   >
-                    <Download size={16} /> Download PDF
+                    <Download size={16} /> View / Download Certificate
                   </a>
+                  {cert.hasCustomFile && (
+                    <a 
+                      href={api.getCertificateDownloadUrl(cert.certificateId)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn btn-secondary"
+                      style={{ padding: '10px 12px', fontSize: '0.82rem' }}
+                      title="Download Generated Certificate PDF"
+                    >
+                      PDF
+                    </a>
+                  )}
                 </div>
               </div>
             );

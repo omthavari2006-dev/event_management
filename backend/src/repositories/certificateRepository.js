@@ -70,6 +70,73 @@ class CertificateRepository {
     });
   }
 
+  async getEventAttendeesWithCertificates(eventId) {
+    const cypher = `
+      MATCH (s:Student)-[att:ATTENDED]->(e:Event {eventId: $eventId})
+      OPTIONAL MATCH (e)-[:ISSUES]->(cert:Certificate)-[:AWARDED_TO]->(s)
+      OPTIONAL MATCH (s)-[w:WON]->(e)
+      RETURN s.studentId AS studentId,
+             s.name AS studentName,
+             s.email AS email,
+             s.department AS department,
+             s.year AS year,
+             att.timeMarked AS attendedAt,
+             cert.certificateId AS certificateId,
+             cert.type AS certificateType,
+             cert.fileUrl AS fileUrl,
+             cert.fileName AS fileName,
+             cert.fileType AS fileType,
+             cert.hasCustomFile AS hasCustomFile,
+             cert.issueDate AS certificateIssueDate,
+             cert.verificationCode AS verificationCode,
+             w.position AS wonPosition,
+             w.prize AS wonPrize
+      ORDER BY att.timeMarked ASC
+    `;
+    const result = await executeQuery(cypher, { eventId });
+    return recordsToObjects(result.records);
+  }
+
+  async saveCustomCertificate({ eventId, studentId, certType, fileUrl, fileName, fileType, verifyCode }) {
+    const certId = `${eventId}_${studentId}`;
+    const cypher = `
+      MATCH (e:Event {eventId: $eventId}), (s:Student {studentId: $studentId})
+      MERGE (cert:Certificate {certificateId: $certId})
+      SET cert.type = $certType,
+          cert.verificationCode = coalesce(cert.verificationCode, $verifyCode),
+          cert.fileUrl = $fileUrl,
+          cert.fileName = $fileName,
+          cert.fileType = $fileType,
+          cert.hasCustomFile = true,
+          cert.issueDate = toString(date())
+      MERGE (e)-[:ISSUES]->(cert)
+      MERGE (cert)-[:AWARDED_TO]->(s)
+      RETURN cert.certificateId AS certificateId,
+             cert.type AS type,
+             cert.verificationCode AS verificationCode,
+             cert.fileUrl AS fileUrl,
+             cert.fileName AS fileName,
+             cert.fileType AS fileType,
+             cert.hasCustomFile AS hasCustomFile,
+             cert.issueDate AS issueDate,
+             s.name AS studentName,
+             s.studentId AS studentId,
+             e.name AS eventName
+    `;
+    const result = await executeQuery(cypher, {
+      eventId,
+      studentId,
+      certId,
+      certType,
+      fileUrl,
+      fileName,
+      fileType,
+      verifyCode
+    });
+    const records = recordsToObjects(result.records);
+    return records[0];
+  }
+
   async getCertificatesByStudent(studentId) {
     const cypher = `
       MATCH (s:Student {studentId: $studentId})<-[:AWARDED_TO]-(cert:Certificate)<-[:ISSUES]-(e:Event)
@@ -79,6 +146,9 @@ class CertificateRepository {
              cert.type AS type,
              cert.verificationCode AS verificationCode,
              cert.fileUrl AS fileUrl,
+             cert.fileName AS fileName,
+             cert.fileType AS fileType,
+             cert.hasCustomFile AS hasCustomFile,
              cert.issueDate AS issueDate,
              e.eventId AS eventId,
              e.name AS eventName,
@@ -103,6 +173,10 @@ class CertificateRepository {
              cert.type AS type,
              cert.verificationCode AS verificationCode,
              cert.issueDate AS issueDate,
+             cert.fileUrl AS fileUrl,
+             cert.fileName AS fileName,
+             cert.fileType AS fileType,
+             cert.hasCustomFile AS hasCustomFile,
              s.name AS studentName,
              s.studentId AS studentId,
              s.department AS department,
@@ -129,6 +203,10 @@ class CertificateRepository {
              cert.type AS type,
              cert.verificationCode AS verificationCode,
              cert.issueDate AS issueDate,
+             cert.fileUrl AS fileUrl,
+             cert.fileName AS fileName,
+             cert.fileType AS fileType,
+             cert.hasCustomFile AS hasCustomFile,
              s.name AS studentName,
              s.studentId AS studentId,
              s.department AS department,

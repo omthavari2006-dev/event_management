@@ -3,10 +3,8 @@ import Navbar from './components/Navbar';
 import EventsPage from './pages/EventsPage';
 import MyRegistrationsPage from './pages/MyRegistrationsPage';
 import CertificatesPage from './pages/CertificatesPage';
-import VerifyPage from './pages/VerifyPage';
 import OrganizerPage from './pages/OrganizerPage';
 import AdminPage from './pages/AdminPage';
-import GraphVivaExplorer from './pages/GraphVivaExplorer';
 import RoleLoginPage from './pages/RoleLoginPage';
 
 import EventDetailModal from './components/EventDetailModal';
@@ -27,7 +25,6 @@ export default function App() {
   const [ticketEvent, setTicketEvent] = useState(null);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [verifyCodeInitial, setVerifyCodeInitial] = useState('');
 
   // Session management: On fresh visit, always show the Role-Based Login Page first!
   // Only restore if user actively signed in during this browser session
@@ -91,10 +88,6 @@ export default function App() {
     setCurrentTab('events');
   };
 
-  const handleNavigateToVerify = (code) => {
-    setVerifyCodeInitial(code);
-    setCurrentTab('verify');
-  };
 
   // If user is not logged in and hasn't chosen guest mode, render the Role-Based Login Page FIRST!
   if (!user && !isGuest) {
@@ -124,7 +117,7 @@ export default function App() {
           backdropFilter: 'blur(8px)'
         }}>
           <span style={{ color: '#334155', fontWeight: 500 }}>
-            👀 You are currently browsing in <strong style={{ color: '#0f172a' }}>Guest Mode</strong> (Public event catalog & certificate verification).
+            👀 You are currently browsing in <strong style={{ color: '#0f172a' }}>Guest Mode</strong> (Public event catalog).
           </span>
           <button 
             className="btn btn-primary"
@@ -168,13 +161,6 @@ export default function App() {
         {currentTab === 'certificates' && (
           <CertificatesPage 
             user={user} 
-            onNavigateToVerify={handleNavigateToVerify}
-          />
-        )}
-
-        {currentTab === 'verify' && (
-          <VerifyPage 
-            initialCode={verifyCodeInitial} 
           />
         )}
 
@@ -189,12 +175,6 @@ export default function App() {
           <AdminPage 
             user={user} 
             onRefresh={loadUserAndNotifs}
-          />
-        )}
-
-        {currentTab === 'viva' && (
-          <GraphVivaExplorer 
-            user={user} 
           />
         )}
       </main>

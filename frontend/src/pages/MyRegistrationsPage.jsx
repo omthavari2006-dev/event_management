@@ -120,16 +120,43 @@ export default function MyRegistrationsPage({ user, onViewTicket, onOpenEvent })
                   <span className={`badge ${
                     reg.status === 'Registered' ? 'badge-success' : reg.status === 'Waitlisted' ? 'badge-warning' : 'badge-danger'
                   }`}>
-                    {reg.status}
+                    {reg.status === 'Registered' ? 'Pass Confirmed' : reg.status}
                   </span>
                   <span className="badge badge-info">{reg.eventType}</span>
                   <span className="badge badge-purple">{reg.clubName}</span>
 
-                  {reg.attended && (
-                    <span className="badge badge-success" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <CheckCircle size={12} /> Attended
+                  {/* Attendance status explicitly rendered */}
+                  {reg.attended ? (
+                    <span className="badge badge-success" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      <CheckCircle size={12} /> Attendance: Present {reg.attendedAt ? `(${new Date(reg.attendedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})` : ''}
                     </span>
-                  )}
+                  ) : (() => {
+                    const now = new Date();
+                    const start = reg.startDateTime ? new Date(reg.startDateTime) : null;
+                    const end = reg.endDateTime ? new Date(reg.endDateTime) : null;
+                    const isOngoing = start && now >= start && (!end || now <= end);
+                    const isCompleted = reg.eventStatus === 'Completed' || (end && now > end);
+
+                    if (isOngoing) {
+                      return (
+                        <span className="badge" style={{ background: 'rgba(239, 68, 68, 0.12)', color: '#dc2626', border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                          ⚡ Event Ongoing: Check In at Venue
+                        </span>
+                      );
+                    }
+                    if (isCompleted) {
+                      return (
+                        <span className="badge" style={{ background: 'rgba(100, 116, 139, 0.12)', color: '#64748b', border: '1px solid rgba(100, 116, 139, 0.25)' }}>
+                          Attendance: Absent (No-Show)
+                        </span>
+                      );
+                    }
+                    return (
+                      <span className="badge" style={{ background: 'rgba(100, 116, 139, 0.08)', color: '#64748b', border: '1px solid rgba(100, 116, 139, 0.2)' }}>
+                        Attendance: Pending (Manual check-in at event)
+                      </span>
+                    );
+                  })()}
 
                   {reg.wonPosition && (
                     <span className="badge badge-warning">

@@ -3,6 +3,17 @@ const { recordsToObjects } = require('../utils/neo4jUtils');
 
 class EventRepository {
   async getAllEvents({ status, type, search, clubId, limit = 50, skip = 0 }) {
+    // Automatically transition any Approved events past their end deadline to Completed
+    try {
+      await executeQuery(`
+        MATCH (e:Event {status: 'Approved'})
+        WHERE e.endDateTime IS NOT NULL AND e.endDateTime < toString(datetime())
+        SET e.status = 'Completed'
+      `);
+    } catch (e) {
+      // non-blocking
+    }
+
     // Determine status query clause:
     // If status is not provided (or 'public'), default to only Approved and Completed events so students never see Pending
     let statusFilter = '';
@@ -10,6 +21,8 @@ class EventRepository {
       statusFilter = "e.status IN ['Approved', 'Completed']";
     } else if (status === 'All') {
       statusFilter = "true";
+    } else if (status === 'Completed') {
+      statusFilter = "(e.status = 'Completed' OR (e.status = 'Approved' AND e.endDateTime IS NOT NULL AND e.endDateTime < toString(datetime())))";
     } else {
       statusFilter = "e.status = $status";
     }
@@ -44,7 +57,8 @@ class EventRepository {
       OPTIONAL MATCH (waitStudent:Student)-[w:REGISTERED_FOR {status: 'Waitlisted'}]->(e)
       OPTIONAL MATCH (attStudent:Student)-[:ATTENDED]->(e)
       OPTIONAL MATCH (pres:Student)-[:PRESIDENT_OF]->(c)
-      WITH e, c, pres,
+      WITH e, c,
+           head(collect(DISTINCT pres.name)) AS presidentName,
            count(DISTINCT regStudent) AS registeredCount,
            count(DISTINCT waitStudent) AS waitlistedCount,
            count(DISTINCT attStudent) AS attendedCount
@@ -65,7 +79,7 @@ class EventRepository {
              c.clubId AS clubId,
              c.name AS clubName,
              c.facultyAdvisor AS facultyAdvisor,
-             pres.name AS presidentName,
+             presidentName,
              registeredCount,
              waitlistedCount,
              attendedCount,
@@ -88,6 +102,16 @@ class EventRepository {
   }
 
   async getEventById(eventId, currentStudentId = null) {
+    try {
+      await executeQuery(`
+        MATCH (e:Event {eventId: $eventId, status: 'Approved'})
+        WHERE e.endDateTime IS NOT NULL AND e.endDateTime < toString(datetime())
+        SET e.status = 'Completed'
+      `, { eventId });
+    } catch (e) {
+      // non-blocking
+    }
+
     const cypher = `
       MATCH (e:Event {eventId: $eventId})
       OPTIONAL MATCH (c:Club)-[:ORGANIZES]->(e)
@@ -102,7 +126,8 @@ class EventRepository {
       OPTIONAL MATCH (curStudent)-[curFb:GAVE_FEEDBACK]->(e)
       OPTIONAL MATCH (curStudent)-[:IN_TEAM]->(curTeam:Team)-[:FOR_EVENT]->(e)
       
-      WITH e, c, pres,
+      WITH e, c,
+           head(collect(DISTINCT pres.name)) AS presidentName,
            count(DISTINCT regStudent) AS registeredCount,
            count(DISTINCT waitStudent) AS waitlistedCount,
            count(DISTINCT attStudent) AS attendedCount,
@@ -129,7 +154,7 @@ class EventRepository {
              c.clubId AS clubId,
              c.name AS clubName,
              c.facultyAdvisor AS facultyAdvisor,
-             pres.name AS presidentName,
+             presidentName,
              registeredCount,
              waitlistedCount,
              attendedCount,

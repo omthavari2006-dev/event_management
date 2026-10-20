@@ -80,9 +80,11 @@ class RegistrationRepository {
       const isRegistered = currentRegistered < event.maxParticipants;
       const finalStatus = isRegistered ? 'Registered' : 'Waitlisted';
 
-      // 3. Atomically MERGE registration relationship
+      // 3. Atomically MERGE registration relationship and clear any stale attendance
       const regQuery = `
         MATCH (s:Student {studentId: $studentId}), (e:Event {eventId: $eventId})
+        OPTIONAL MATCH (s)-[staleAtt:ATTENDED]->(e)
+        DELETE staleAtt
         MERGE (s)-[reg:REGISTERED_FOR]->(e)
         ON CREATE SET 
           reg.registrationId = $registrationId,
@@ -131,11 +133,14 @@ class RegistrationRepository {
    */
   async cancelRegistration(studentId, eventId) {
     return executeWriteTransaction(async (tx) => {
-      // 1. Mark current registration as Cancelled
+      // 1. Mark current registration as Cancelled and remove attendance
       const cancelQuery = `
         MATCH (s:Student {studentId: $studentId})-[r:REGISTERED_FOR]->(e:Event {eventId: $eventId})
         WHERE r.status = 'Registered' OR r.status = 'Waitlisted'
         SET r.status = 'Cancelled', r.cancelledAt = toString(datetime())
+        WITH s, e, r
+        OPTIONAL MATCH (s)-[att:ATTENDED]->(e)
+        DELETE att
         RETURN r.status AS prevStatus, e.name AS eventName
       `;
       const cancelRes = await tx.run(cancelQuery, { studentId, eventId });

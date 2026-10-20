@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Search, Calendar, MapPin, Users, Sparkles, Filter, 
   ArrowRight, ShieldCheck, Flame, Compass, CheckCircle,
-  Clock, Lock
+  Clock, Lock, Award
 } from 'lucide-react';
 import { api } from '../api/client';
 
@@ -12,7 +12,7 @@ export default function EventsPage({ user, onSelectEvent, onOpenAuth }) {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedType, setSelectedType] = useState('All');
-  const [selectedStatus, setSelectedStatus] = useState('Approved');
+  const [activePhaseTab, setActivePhaseTab] = useState('registration'); // 'registration' | 'ongoing' | 'completed' | 'all'
 
   const categories = ['All', 'Hackathon', 'Workshop', 'Cultural', 'Seminar', 'Sports'];
 
@@ -20,7 +20,7 @@ export default function EventsPage({ user, onSelectEvent, onOpenAuth }) {
     try {
       setLoading(true);
       const params = {
-        status: selectedStatus === 'All' ? 'public' : selectedStatus,
+        status: 'public', // Loads all Approved and Completed events
         type: selectedType === 'All' ? null : selectedType,
         search: search.trim() || null
       };
@@ -44,7 +44,7 @@ export default function EventsPage({ user, onSelectEvent, onOpenAuth }) {
 
   useEffect(() => {
     loadEvents();
-  }, [selectedType, selectedStatus, user]);
+  }, [selectedType, user]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -173,218 +173,452 @@ export default function EventsPage({ user, onSelectEvent, onOpenAuth }) {
         </div>
       )}
 
-      {/* Catalog Filters Bar */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: 16,
-        marginBottom: 28
-      }}>
-        {/* Category Pills */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setSelectedType(cat)}
-              style={{
-                padding: '9px 18px',
-                borderRadius: 20,
-                fontSize: '0.86rem',
-                fontWeight: 600,
-                background: selectedType === cat ? 'var(--accent-gradient)' : 'rgba(255, 255, 255, 0.85)',
-                color: selectedType === cat ? '#ffffff' : '#475569',
-                border: `1.5px solid ${selectedType === cat ? 'transparent' : 'rgba(226, 232, 240, 0.9)'}`,
-                boxShadow: selectedType === cat ? '0 6px 18px rgba(99, 102, 241, 0.35)' : '0 2px 6px rgba(100, 116, 139, 0.05)',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
+      {/* 3 Main Event Phase Tabs */}
+      {(() => {
+        const now = new Date();
 
-        {/* Status Filter */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600 }}>Status:</span>
-          <select 
-            value={selectedStatus} 
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            style={{ fontSize: '0.86rem', padding: '7px 14px', borderRadius: 10 }}
-          >
-            <option value="Approved">Upcoming & Active</option>
-            <option value="Completed">Past & Completed</option>
-            <option value="All">All Active & Past</option>
-          </select>
-        </div>
-      </div>
+        const registrationEvents = events.filter(evt => {
+          if (evt.status !== 'Approved') return false;
+          const start = evt.startDateTime ? new Date(evt.startDateTime) : null;
+          const deadline = evt.registrationDeadline ? new Date(evt.registrationDeadline) : start;
+          return start && now < start && (!deadline || now <= deadline);
+        });
 
-      {/* Events Grid */}
-      {loading ? (
-        <div style={{ padding: 80, textAlign: 'center', color: '#64748b', fontSize: '1.05rem', fontWeight: 500 }}>
-          Querying Neo4j Graph for campus events...
-        </div>
-      ) : events.length === 0 ? (
-        <div style={{
-          textAlign: 'center',
-          padding: '64px 24px',
-          background: 'rgba(255, 255, 255, 0.85)',
-          borderRadius: 22,
-          border: '1.5px solid rgba(226, 232, 240, 0.9)',
-          boxShadow: '0 10px 30px rgba(100, 116, 139, 0.06)'
-        }}>
-          <Calendar size={48} style={{ margin: '0 auto 16px', color: '#6366f1' }} />
-          <h3 style={{ fontSize: '1.35rem', marginBottom: 8, color: '#0f172a', fontWeight: 700 }}>No Approved Events Yet</h3>
-          <p style={{ color: '#64748b', fontSize: '0.94rem', maxWidth: 520, margin: '0 auto 16px', lineHeight: 1.6 }}>
-            All demo events have been removed from the database. When a club organizer proposes an event in the <strong>Studio</strong> and the Dean / Admin approves it, it will appear here for student registrations!
-          </p>
-        </div>
-      ) : (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
-          gap: 24
-        }}>
-          {events.map((evt) => {
-            const seatsPercent = Math.min(100, Math.round((evt.registeredCount / (evt.maxParticipants || 1)) * 100));
-            const isFull = evt.seatsLeft <= 0;
-            const now = new Date();
-            const deadlineDate = evt.registrationDeadline ? new Date(evt.registrationDeadline) : (evt.startDateTime ? new Date(evt.startDateTime) : null);
-            const startDate = evt.startDateTime ? new Date(evt.startDateTime) : null;
-            const isDeadlinePassed = (deadlineDate && deadlineDate < now) || (startDate && startDate < now);
-            const isRegistrationClosed = evt.status === 'Completed' || evt.status === 'Cancelled' || isDeadlinePassed;
+        const ongoingEvents = events.filter(evt => {
+          if (evt.status !== 'Approved') return false;
+          const start = evt.startDateTime ? new Date(evt.startDateTime) : null;
+          const end = evt.endDateTime ? new Date(evt.endDateTime) : null;
+          return start && now >= start && (!end || now <= end);
+        });
 
-            return (
-              <div 
-                key={evt.eventId}
-                className="card-interactive"
-                onClick={() => onSelectEvent(evt.eventId)}
+        const completedEvents = events.filter(evt => {
+          if (evt.status === 'Completed') return true;
+          if (evt.status === 'Approved' && evt.endDateTime && now > new Date(evt.endDateTime)) return true;
+          return false;
+        });
+
+        let displayedEvents = events;
+        if (activePhaseTab === 'registration') {
+          displayedEvents = registrationEvents;
+        } else if (activePhaseTab === 'ongoing') {
+          displayedEvents = ongoingEvents;
+        } else if (activePhaseTab === 'completed') {
+          displayedEvents = completedEvents;
+        }
+
+        let emptyTitle = "No Events Found";
+        let emptyDesc = "No events match the selected criteria.";
+        if (activePhaseTab === 'registration') {
+          emptyTitle = "No Events in Registration Phase";
+          emptyDesc = "There are currently no events open for registration. Check out Ongoing or Completed events, or check back soon!";
+        } else if (activePhaseTab === 'ongoing') {
+          emptyTitle = "No Events Currently Ongoing";
+          emptyDesc = "There are no live events happening right now. Per campus rules, attendance can ONLY be taken while an event is ongoing.";
+        } else if (activePhaseTab === 'completed') {
+          emptyTitle = "No Completed Events Yet";
+          emptyDesc = "Concluded campus events with attendance records and certificates will be archived here.";
+        }
+
+        return (
+          <>
+            {/* Primary Phase Navigation Tabs */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              marginBottom: 24,
+              borderBottom: '2px solid rgba(226, 232, 240, 0.9)',
+              paddingBottom: 16,
+              flexWrap: 'wrap'
+            }}>
+              <button
+                onClick={() => setActivePhaseTab('registration')}
                 style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  padding: 24,
-                  cursor: 'pointer'
+                  padding: '11px 22px',
+                  borderRadius: 14,
+                  fontSize: '0.94rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  background: activePhaseTab === 'registration' ? 'linear-gradient(135deg, #3b82f6, #1d4ed8)' : 'rgba(255, 255, 255, 0.85)',
+                  color: activePhaseTab === 'registration' ? '#ffffff' : '#334155',
+                  border: activePhaseTab === 'registration' ? 'none' : '1.5px solid rgba(226, 232, 240, 0.9)',
+                  boxShadow: activePhaseTab === 'registration' ? '0 8px 20px rgba(59, 130, 246, 0.3)' : '0 2px 6px rgba(100, 116, 139, 0.05)'
                 }}
               >
-                {/* Event Card Header */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    <span className="badge badge-info">{evt.type}</span>
-                    <span className="badge badge-purple">{evt.clubName}</span>
-                  </div>
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                    {isRegistrationClosed ? (
-                      <span className="badge" style={{
-                        background: 'rgba(239, 68, 68, 0.12)',
-                        color: '#b91c1c',
-                        border: '1.5px solid rgba(239, 68, 68, 0.35)',
-                        fontWeight: 700,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 4
-                      }}>
-                        <Lock size={12} /> Registration Closed
-                      </span>
-                    ) : (
-                      <span className="badge badge-success" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                        <CheckCircle size={12} /> Registration Open
-                      </span>
-                    )}
-                    <span className={`badge ${evt.status === 'Approved' ? 'badge-success' : evt.status === 'Completed' ? 'badge-purple' : 'badge-warning'}`}>
-                      {evt.status}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Event Title & Description */}
-                <h3 style={{ fontSize: '1.25rem', marginBottom: 8, color: '#0f172a', lineHeight: 1.3, fontWeight: 700 }}>
-                  {evt.name}
-                </h3>
-                <p style={{
-                  fontSize: '0.88rem',
-                  color: '#475569',
-                  lineHeight: 1.55,
-                  marginBottom: 12,
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden'
+                <span>📝 Open for Registration</span>
+                <span style={{
+                  fontSize: '0.78rem',
+                  padding: '2px 8px',
+                  borderRadius: 10,
+                  background: activePhaseTab === 'registration' ? 'rgba(255, 255, 255, 0.25)' : 'rgba(59, 130, 246, 0.12)',
+                  color: activePhaseTab === 'registration' ? '#ffffff' : '#1d4ed8',
+                  fontWeight: 800
                 }}>
-                  {evt.description}
-                </p>
+                  {registrationEvents.length}
+                </span>
+              </button>
 
-                {/* Event Requirements Pill */}
-                {evt.requirements && (
-                  <div style={{
-                    fontSize: '0.8rem',
-                    color: '#6b21a8',
-                    background: 'rgba(168, 85, 247, 0.08)',
-                    border: '1px solid rgba(168, 85, 247, 0.25)',
-                    padding: '6px 12px',
-                    borderRadius: 10,
-                    marginBottom: 14,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6
-                  }}>
-                    <span>📋 <strong>Requirements:</strong> {evt.requirements.length > 50 ? evt.requirements.substring(0, 50) + '...' : evt.requirements}</span>
-                  </div>
-                )}
+              <button
+                onClick={() => setActivePhaseTab('ongoing')}
+                style={{
+                  padding: '11px 22px',
+                  borderRadius: 14,
+                  fontSize: '0.94rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  background: activePhaseTab === 'ongoing' ? 'linear-gradient(135deg, #10b981, #059669)' : 'rgba(255, 255, 255, 0.85)',
+                  color: activePhaseTab === 'ongoing' ? '#ffffff' : '#334155',
+                  border: activePhaseTab === 'ongoing' ? 'none' : '1.5px solid rgba(226, 232, 240, 0.9)',
+                  boxShadow: activePhaseTab === 'ongoing' ? '0 8px 20px rgba(16, 185, 129, 0.3)' : '0 2px 6px rgba(100, 116, 139, 0.05)'
+                }}
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ width: 9, height: 9, borderRadius: '50%', background: activePhaseTab === 'ongoing' ? '#ffffff' : '#dc2626', display: 'inline-block' }}></span>
+                  ⚡ Ongoing Events
+                </span>
+                <span style={{
+                  fontSize: '0.78rem',
+                  padding: '2px 8px',
+                  borderRadius: 10,
+                  background: activePhaseTab === 'ongoing' ? 'rgba(255, 255, 255, 0.25)' : 'rgba(16, 185, 129, 0.15)',
+                  color: activePhaseTab === 'ongoing' ? '#ffffff' : '#047857',
+                  fontWeight: 800
+                }}>
+                  {ongoingEvents.length}
+                </span>
+              </button>
 
-                {/* Event Venue, Event Date & Registration Deadline */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 9, fontSize: '0.84rem', color: '#334155', marginBottom: 18, background: 'rgba(241, 245, 249, 0.65)', padding: '10px 14px', borderRadius: 12, border: '1px solid rgba(226, 232, 240, 0.9)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <MapPin size={15} color="#4f46e5" style={{ flexShrink: 0 }} />
-                    <span style={{ fontWeight: 600, color: '#0f172a' }}>{evt.venue}</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Calendar size={15} color="#0284c7" style={{ flexShrink: 0 }} />
-                    <span>
-                      <strong>Event Date:</strong> {startDate ? `${startDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })} at ${startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'TBA'}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Clock size={15} color={isDeadlinePassed ? '#dc2626' : '#d97706'} style={{ flexShrink: 0 }} />
-                    <span style={{ color: isDeadlinePassed ? '#b91c1c' : '#334155' }}>
-                      <strong>Reg Deadline:</strong> {deadlineDate ? `${deadlineDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} at ${deadlineDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'At event start'}
-                      {isDeadlinePassed && <span style={{ marginLeft: 6, fontWeight: 700, color: '#dc2626' }}>(Closed)</span>}
-                    </span>
-                  </div>
-                </div>
+              <button
+                onClick={() => setActivePhaseTab('completed')}
+                style={{
+                  padding: '11px 22px',
+                  borderRadius: 14,
+                  fontSize: '0.94rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  background: activePhaseTab === 'completed' ? 'linear-gradient(135deg, #8b5cf6, #6d28d9)' : 'rgba(255, 255, 255, 0.85)',
+                  color: activePhaseTab === 'completed' ? '#ffffff' : '#334155',
+                  border: activePhaseTab === 'completed' ? 'none' : '1.5px solid rgba(226, 232, 240, 0.9)',
+                  boxShadow: activePhaseTab === 'completed' ? '0 8px 20px rgba(139, 92, 246, 0.3)' : '0 2px 6px rgba(100, 116, 139, 0.05)'
+                }}
+              >
+                <span>🏁 Completed Events</span>
+                <span style={{
+                  fontSize: '0.78rem',
+                  padding: '2px 8px',
+                  borderRadius: 10,
+                  background: activePhaseTab === 'completed' ? 'rgba(255, 255, 255, 0.25)' : 'rgba(139, 92, 246, 0.15)',
+                  color: activePhaseTab === 'completed' ? '#ffffff' : '#6d28d9',
+                  fontWeight: 800
+                }}>
+                  {completedEvents.length}
+                </span>
+              </button>
 
-                {/* Seats & Capacity Meter */}
-                <div style={{ marginTop: 'auto', paddingTop: 14, borderTop: '1px solid rgba(226, 232, 240, 0.8)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', marginBottom: 6 }}>
-                    <span style={{ color: '#64748b', fontWeight: 500 }}>
-                      {evt.registeredCount} / {evt.maxParticipants} Registered
-                    </span>
-                    {isRegistrationClosed ? (
-                      <span style={{ fontWeight: 700, color: '#dc2626', display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <Lock size={12} /> Registration Closed
-                      </span>
-                    ) : (
-                      <span style={{ fontWeight: 700, color: isFull ? '#d97706' : '#059669' }}>
-                        {isFull ? 'Waitlist Open' : `${evt.seatsLeft} Seats Left`}
-                      </span>
-                    )}
-                  </div>
+              <button
+                onClick={() => setActivePhaseTab('all')}
+                style={{
+                  padding: '10px 18px',
+                  borderRadius: 14,
+                  fontSize: '0.86rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  marginLeft: 'auto',
+                  background: activePhaseTab === 'all' ? 'rgba(15, 23, 42, 0.9)' : 'rgba(241, 245, 249, 0.8)',
+                  color: activePhaseTab === 'all' ? '#ffffff' : '#64748b',
+                  border: '1px solid rgba(203, 213, 225, 0.8)'
+                }}
+              >
+                All Events ({events.length})
+              </button>
+            </div>
 
-                  <div style={{ width: '100%', height: 7, borderRadius: 4, background: 'rgba(226, 232, 240, 0.9)', overflow: 'hidden' }}>
-                    <div style={{
-                      width: `${seatsPercent}%`,
-                      height: '100%',
-                      background: isRegistrationClosed ? 'rgba(148, 163, 184, 0.7)' : isFull ? '#f59e0b' : 'linear-gradient(90deg, #10b981, #06b6d4)',
-                      transition: 'width 0.3s ease'
-                    }} />
-                  </div>
-                </div>
+            {/* Category Pills Bar */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              flexWrap: 'wrap',
+              marginBottom: 28
+            }}>
+              <span style={{ fontSize: '0.84rem', color: '#64748b', fontWeight: 600, marginRight: 4 }}>Filter:</span>
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedType(cat)}
+                  style={{
+                    padding: '7px 16px',
+                    borderRadius: 18,
+                    fontSize: '0.84rem',
+                    fontWeight: 600,
+                    background: selectedType === cat ? '#0f172a' : 'rgba(255, 255, 255, 0.85)',
+                    color: selectedType === cat ? '#ffffff' : '#475569',
+                    border: `1.5px solid ${selectedType === cat ? '#0f172a' : 'rgba(226, 232, 240, 0.9)'}`,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
+            {/* Events Grid */}
+            {loading ? (
+              <div style={{ padding: 80, textAlign: 'center', color: '#64748b', fontSize: '1.05rem', fontWeight: 500 }}>
+                Querying Neo4j Graph for campus events...
               </div>
-            );
-          })}
-        </div>
-      )}
+            ) : displayedEvents.length === 0 ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '64px 24px',
+                background: 'rgba(255, 255, 255, 0.85)',
+                borderRadius: 22,
+                border: '1.5px solid rgba(226, 232, 240, 0.9)',
+                boxShadow: '0 10px 30px rgba(100, 116, 139, 0.06)'
+              }}>
+                <Calendar size={48} style={{ margin: '0 auto 16px', color: '#6366f1' }} />
+                <h3 style={{ fontSize: '1.35rem', marginBottom: 8, color: '#0f172a', fontWeight: 700 }}>{emptyTitle}</h3>
+                <p style={{ color: '#64748b', fontSize: '0.94rem', maxWidth: 520, margin: '0 auto 16px', lineHeight: 1.6 }}>
+                  {emptyDesc}
+                </p>
+              </div>
+            ) : (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+                gap: 24
+              }}>
+                {displayedEvents.map((evt) => {
+                  const seatsPercent = Math.min(100, Math.round((evt.registeredCount / (evt.maxParticipants || 1)) * 100));
+                  const isFull = evt.seatsLeft <= 0;
+                  const deadlineDate = evt.registrationDeadline ? new Date(evt.registrationDeadline) : (evt.startDateTime ? new Date(evt.startDateTime) : null);
+                  const startDate = evt.startDateTime ? new Date(evt.startDateTime) : null;
+                  const endDate = evt.endDateTime ? new Date(evt.endDateTime) : null;
+                  const isDeadlinePassed = (deadlineDate && deadlineDate < now) || (startDate && startDate < now);
+                  const isEventConcluded = evt.status === 'Completed' || (endDate && endDate < now);
+                  const isEventOngoing = evt.status === 'Approved' && startDate && now >= startDate && (!endDate || now <= endDate);
+                  const isRegistrationPhase = evt.status === 'Approved' && startDate && now < startDate && (!deadlineDate || now <= deadlineDate);
+
+                  const turnoutPercent = evt.registeredCount > 0 ? Math.round(((evt.attendedCount || 0) / evt.registeredCount) * 100) : 0;
+
+                  return (
+                    <div 
+                      key={evt.eventId}
+                      className="card-interactive"
+                      onClick={() => onSelectEvent(evt.eventId)}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        padding: 24,
+                        cursor: 'pointer',
+                        border: isEventOngoing ? '2px solid rgba(16, 185, 129, 0.6)' : undefined,
+                        boxShadow: isEventOngoing ? '0 12px 32px rgba(16, 185, 129, 0.15)' : undefined
+                      }}
+                    >
+                      {/* Event Card Header */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                          <span className="badge badge-info">{evt.type}</span>
+                          <span className="badge badge-purple">{evt.clubName}</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                          {isEventOngoing ? (
+                            <span className="badge" style={{
+                              background: 'rgba(239, 68, 68, 0.15)',
+                              color: '#dc2626',
+                              border: '1.5px solid rgba(239, 68, 68, 0.4)',
+                              fontWeight: 800,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 6
+                            }}>
+                              <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#dc2626', display: 'inline-block' }}></span>
+                              LIVE ONGOING
+                            </span>
+                          ) : isEventConcluded ? (
+                            <span className="badge" style={{
+                              background: 'rgba(147, 51, 234, 0.12)',
+                              color: '#7e22ce',
+                              border: '1.5px solid rgba(147, 51, 234, 0.35)',
+                              fontWeight: 700,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4
+                            }}>
+                              <CheckCircle size={12} /> Completed
+                            </span>
+                          ) : isRegistrationPhase ? (
+                            <span className="badge badge-success" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                              <CheckCircle size={12} /> Registration Open
+                            </span>
+                          ) : (
+                            <span className="badge" style={{
+                              background: 'rgba(239, 68, 68, 0.12)',
+                              color: '#b91c1c',
+                              border: '1.5px solid rgba(239, 68, 68, 0.35)',
+                              fontWeight: 700,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4
+                            }}>
+                              <Lock size={12} /> Registration Closed
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Event Title & Description */}
+                      <h3 style={{ fontSize: '1.25rem', marginBottom: 8, color: '#0f172a', lineHeight: 1.3, fontWeight: 700 }}>
+                        {evt.name}
+                      </h3>
+                      <p style={{
+                        fontSize: '0.88rem',
+                        color: '#475569',
+                        lineHeight: 1.55,
+                        marginBottom: 12,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden'
+                      }}>
+                        {evt.description}
+                      </p>
+
+                      {/* Event Requirements Pill */}
+                      {evt.requirements && (
+                        <div style={{
+                          fontSize: '0.8rem',
+                          color: '#6b21a8',
+                          background: 'rgba(168, 85, 247, 0.08)',
+                          border: '1px solid rgba(168, 85, 247, 0.25)',
+                          padding: '6px 12px',
+                          borderRadius: 10,
+                          marginBottom: 14,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6
+                        }}>
+                          <span>📋 <strong>Requirements:</strong> {evt.requirements.length > 50 ? evt.requirements.substring(0, 50) + '...' : evt.requirements}</span>
+                        </div>
+                      )}
+
+                      {/* Timing & Venue Box */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 9, fontSize: '0.84rem', color: '#334155', marginBottom: 18, background: 'rgba(241, 245, 249, 0.65)', padding: '10px 14px', borderRadius: 12, border: '1px solid rgba(226, 232, 240, 0.9)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <MapPin size={15} color="#4f46e5" style={{ flexShrink: 0 }} />
+                          <span style={{ fontWeight: 600, color: '#0f172a' }}>{evt.venue}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <Calendar size={15} color="#0284c7" style={{ flexShrink: 0 }} />
+                          <span>
+                            <strong>Date:</strong> {startDate ? `${startDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })} at ${startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'TBA'}
+                          </span>
+                        </div>
+                        {isEventOngoing ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <Clock size={15} color="#059669" style={{ flexShrink: 0 }} />
+                            <span style={{ color: '#047857', fontWeight: 600 }}>
+                              <strong>Ongoing until:</strong> {endDate ? endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'completion'}
+                            </span>
+                          </div>
+                        ) : isRegistrationPhase ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <Clock size={15} color={isDeadlinePassed ? '#dc2626' : '#d97706'} style={{ flexShrink: 0 }} />
+                            <span style={{ color: isDeadlinePassed ? '#b91c1c' : '#334155' }}>
+                              <strong>Reg Deadline:</strong> {deadlineDate ? `${deadlineDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} at ${deadlineDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'At event start'}
+                            </span>
+                          </div>
+                        ) : null}
+                      </div>
+
+                      {/* Phase Specific Footer Metrics */}
+                      {isEventConcluded ? (
+                        <div style={{ marginTop: 'auto', paddingTop: 14, borderTop: '1.5px solid rgba(226, 232, 240, 0.8)' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, textAlign: 'center', marginBottom: 10 }}>
+                            <div style={{ background: 'rgba(241, 245, 249, 0.7)', padding: '6px 4px', borderRadius: 8 }}>
+                              <div style={{ fontSize: '0.72rem', color: '#64748b' }}>REGISTERED</div>
+                              <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.92rem' }}>{evt.registeredCount}</div>
+                            </div>
+                            <div style={{ background: 'rgba(209, 250, 229, 0.6)', padding: '6px 4px', borderRadius: 8 }}>
+                              <div style={{ fontSize: '0.72rem', color: '#047857' }}>ATTENDED</div>
+                              <div style={{ fontWeight: 800, color: '#059669', fontSize: '0.92rem' }}>{evt.attendedCount || 0}</div>
+                            </div>
+                            <div style={{ background: 'rgba(243, 232, 255, 0.7)', padding: '6px 4px', borderRadius: 8 }}>
+                              <div style={{ fontSize: '0.72rem', color: '#7e22ce' }}>TURNOUT</div>
+                              <div style={{ fontWeight: 800, color: '#6d28d9', fontSize: '0.92rem' }}>{turnoutPercent}%</div>
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem', color: '#6d28d9', fontWeight: 700 }}>
+                            <span>Full Details & Results</span>
+                            <ArrowRight size={15} />
+                          </div>
+                        </div>
+                      ) : isEventOngoing ? (
+                        <div style={{ marginTop: 'auto', paddingTop: 14, borderTop: '1.5px solid rgba(226, 232, 240, 0.8)' }}>
+                          <div style={{
+                            background: 'rgba(16, 185, 129, 0.1)',
+                            border: '1px solid rgba(16, 185, 129, 0.3)',
+                            borderRadius: 10,
+                            padding: '8px 12px',
+                            fontSize: '0.82rem',
+                            color: '#065f46',
+                            marginBottom: 8,
+                            fontWeight: 600
+                          }}>
+                            ⚡ Live Attendance in Progress at Venue
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem', color: '#059669', fontWeight: 700 }}>
+                            <span>{evt.attendedCount || 0} / {evt.registeredCount} Students Checked In</span>
+                            <ArrowRight size={15} />
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ marginTop: 'auto', paddingTop: 14, borderTop: '1px solid rgba(226, 232, 240, 0.8)' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', marginBottom: 6 }}>
+                            <span style={{ color: '#64748b', fontWeight: 500 }}>
+                              {evt.registeredCount} / {evt.maxParticipants} Registered
+                            </span>
+                            <span style={{ fontWeight: 700, color: isFull ? '#d97706' : '#059669' }}>
+                              {isFull ? 'Waitlist Open' : `${evt.seatsLeft} Seats Left`}
+                            </span>
+                          </div>
+
+                          <div style={{ width: '100%', height: 7, borderRadius: 4, background: 'rgba(226, 232, 240, 0.9)', overflow: 'hidden', marginBottom: 10 }}>
+                            <div style={{
+                              width: `${seatsPercent}%`,
+                              height: '100%',
+                              background: isFull ? '#f59e0b' : 'linear-gradient(90deg, #10b981, #06b6d4)',
+                              transition: 'width 0.3s ease'
+                            }} />
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', fontSize: '0.82rem', color: '#2563eb', fontWeight: 700 }}>
+                            <span>Register Now</span>
+                            <ArrowRight size={15} style={{ marginLeft: 4 }} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        );
+      })()}
     </div>
   );
 }

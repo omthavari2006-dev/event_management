@@ -80,9 +80,12 @@ export const api = {
 
   // Certificates
   generateCertificates: (eventId) => request(`/certificates/event/${eventId}/generate`, { method: 'POST' }),
+  getEventAttendeesWithCertificates: (eventId) => request(`/certificates/event/${eventId}/attendees`),
+  uploadStudentCertificate: (eventId, studentId, data) => request(`/certificates/event/${eventId}/student/${studentId}/upload`, { method: 'POST', body: JSON.stringify(data) }),
   getMyCertificates: () => request('/certificates/my'),
   verifyCertificate: (code) => request(`/certificates/verify?code=${encodeURIComponent(code)}`),
   getCertificateDownloadUrl: (certificateId) => `${API_BASE}/certificates/${certificateId}/download`,
+  getCertificateFileUrl: (certificateId) => `${API_BASE}/certificates/${certificateId}/file`,
 
   // Feedback
   submitFeedback: (eventId, rating, comment) => request(`/feedback/event/${eventId}`, { method: 'POST', body: JSON.stringify({ rating, comment }) }),

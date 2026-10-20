@@ -15,8 +15,8 @@ class ClubRepository {
              c.facultyAdvisor AS facultyAdvisor,
              c.status AS status,
              c.createdDate AS createdDate,
-             p.name AS presidentName,
-             p.studentId AS presidentId,
+             head(collect(DISTINCT p.name)) AS presidentName,
+             head(collect(DISTINCT p.studentId)) AS presidentId,
              count(DISTINCT e) AS totalEvents,
              count(DISTINCT m) AS memberCount
       ORDER BY c.name ASC
@@ -37,8 +37,8 @@ class ClubRepository {
              c.facultyAdvisor AS facultyAdvisor,
              c.status AS status,
              c.createdDate AS createdDate,
-             p.name AS presidentName,
-             p.studentId AS presidentId,
+             head(collect(DISTINCT p.name)) AS presidentName,
+             head(collect(DISTINCT p.studentId)) AS presidentId,
              collect(DISTINCT {
                studentId: m.studentId,
                name: m.name,

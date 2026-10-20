@@ -86,7 +86,7 @@ export default function EventDetailModal({
       setMessage({
         type: res.status === 'Registered' ? 'success' : 'warning',
         text: res.status === 'Registered' 
-          ? 'Seat successfully confirmed! View your pass in My Registrations.' 
+          ? 'Seat successfully confirmed! View your pass in My Registrations. Note: Attendance will be marked manually by the organizer at the venue during event hours.' 
           : 'Event is full! You have been added to the waitlist.'
       });
       if (res.warning) {

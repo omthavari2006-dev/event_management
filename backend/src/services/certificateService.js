@@ -1,10 +1,94 @@
 const certificateRepository = require('../repositories/certificateRepository');
 const PDFDocument = require('pdfkit');
 const QRCode = require('qrcode');
+const path = require('path');
+const fs = require('fs');
+const { v4: uuidv4 } = require('uuid');
 
 class CertificateService {
   async generateCertificates(eventId) {
     return certificateRepository.generateCertificatesForEvent(eventId);
+  }
+
+  async getEventAttendeesWithCertificates(eventId) {
+    return certificateRepository.getEventAttendeesWithCertificates(eventId);
+  }
+
+  async uploadStudentCertificate({ eventId, studentId, fileData, fileName, fileType, type }) {
+    if (!fileData) {
+      throw new Error('Certificate file data is required.');
+    }
+
+    // Decode base64 if prefixed with Data URL
+    let buffer;
+    let detectedMime = fileType || 'application/pdf';
+    const matches = typeof fileData === 'string' ? fileData.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/) : null;
+    
+    if (matches && matches.length === 3) {
+      detectedMime = matches[1];
+      buffer = Buffer.from(matches[2], 'base64');
+    } else if (typeof fileData === 'string') {
+      buffer = Buffer.from(fileData, 'base64');
+    } else {
+      buffer = Buffer.from(fileData);
+    }
+
+    const certId = `${eventId}_${studentId}`;
+    const cleanFileName = fileName || `certificate_${certId}.pdf`;
+    const ext = path.extname(cleanFileName) || (detectedMime.includes('pdf') ? '.pdf' : '.png');
+    const safeDiskName = `${certId}_${Date.now()}${ext}`;
+    
+    const uploadsDir = path.join(__dirname, '../../uploads/certificates');
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+
+    const diskPath = path.join(uploadsDir, safeDiskName);
+    fs.writeFileSync(diskPath, buffer);
+
+    const fileUrl = `/uploads/certificates/${safeDiskName}`;
+    const certType = type === 'Winner' ? 'Winner' : 'Participation';
+    const verifyCode = `VERIFY-${certType === 'Winner' ? 'WIN' : 'PAR'}-${uuidv4().substring(0, 6).toUpperCase()}`;
+
+    return certificateRepository.saveCustomCertificate({
+      eventId,
+      studentId,
+      certType,
+      fileUrl,
+      fileName: cleanFileName,
+      fileType: detectedMime,
+      verifyCode
+    });
+  }
+
+  async getCertificateFile(certificateId) {
+    const cert = await certificateRepository.getCertificateById(certificateId);
+    if (!cert) {
+      throw new Error('Certificate not found.');
+    }
+
+    if (cert.hasCustomFile && cert.fileUrl) {
+      // fileUrl is /uploads/certificates/...
+      const relativePart = cert.fileUrl.replace(/^\/uploads\//, '');
+      const fullDiskPath = path.join(__dirname, '../../uploads', relativePart);
+      if (fs.existsSync(fullDiskPath)) {
+        return {
+          type: 'custom',
+          filePath: fullDiskPath,
+          fileName: cert.fileName || `certificate-${certificateId}.pdf`,
+          mimeType: cert.fileType || 'application/pdf'
+        };
+      }
+    }
+
+    // Fallback to generated PDF
+    const pdfBuffer = await this.generateCertificatePdf(certificateId);
+    return {
+      type: 'buffer',
+      buffer: pdfBuffer,
+      fileName: `certificate-${certificateId}.pdf`,
+      mimeType: 'application/pdf'
+    };
   }
 
   async getStudentCertificates(studentId) {

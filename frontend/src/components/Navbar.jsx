@@ -89,14 +89,6 @@ export default function Navbar({
             <Award size={16} /> Certificates
           </button>
 
-          <button 
-            className={`btn ${currentTab === 'verify' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setCurrentTab('verify')}
-            style={{ padding: '8px 14px', fontSize: '0.88rem' }}
-          >
-            <CheckCircle size={16} /> Verify
-          </button>
-
           {user && (
             <button 
               className={`btn ${currentTab === 'organizer' ? 'btn-primary' : 'btn-secondary'}`}
@@ -117,19 +109,11 @@ export default function Navbar({
                 background: currentTab === 'admin' ? 'linear-gradient(135deg, #f59e0b, #ef4444)' : undefined,
                 color: currentTab === 'admin' ? '#fff' : '#b45309'
               }}
-              title="Admin Command Center (Verify & Approve Events)"
+              title="Admin Command Center (Approve Events)"
             >
               <Shield size={16} color={currentTab === 'admin' ? '#fff' : '#d97706'} /> Admin
             </button>
           )}
-
-          <button 
-            className={`btn ${currentTab === 'viva' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setCurrentTab('viva')}
-            style={{ padding: '8px 14px', fontSize: '0.88rem', borderColor: 'rgba(6, 182, 212, 0.4)', color: currentTab === 'viva' ? '#fff' : '#38bdf8' }}
-          >
-            <Sparkles size={16} /> Graph & Viva
-          </button>
         </nav>
 
         {/* User / Auth Controls */}

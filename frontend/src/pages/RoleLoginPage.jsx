@@ -625,7 +625,7 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
             onMouseEnter={(e) => e.currentTarget.style.color = '#0f172a'}
             onMouseLeave={(e) => e.currentTarget.style.color = '#64748b'}
           >
-            <Compass size={17} /> Continue as Public Guest Explorer (Browse Events & Verify Certificates) &rarr;
+            <Compass size={17} /> Continue as Public Guest Explorer (Browse Events) &rarr;
           </button>
         </div>
       </div>

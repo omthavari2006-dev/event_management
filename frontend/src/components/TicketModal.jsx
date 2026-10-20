@@ -72,8 +72,11 @@ export default function TicketModal({ event, user, onClose }) {
           }}>
             <QRCodeSVG value={ticketData} size={180} level="M" />
           </div>
-          <div style={{ fontSize: '0.82rem', color: '#64748b', marginTop: 14, fontWeight: 500 }}>
-            Present this QR Code to Organizer at Gate
+          <div style={{ fontSize: '0.84rem', color: '#334155', marginTop: 14, fontWeight: 600, textAlign: 'center' }}>
+            Show this QR code to the event organizer at the venue to be marked Present
+          </div>
+          <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: 4, textAlign: 'center' }}>
+            Note: Attendance is marked manually by the organizer during event hours only.
           </div>
         </div>
 
