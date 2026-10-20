@@ -81,34 +81,6 @@ export default function App() {
     }
   };
 
-  const handleQuickLogin = async (email, password) => {
-    try {
-      const res = await api.login(email, password);
-      sessionStorage.setItem('campus_session_active', 'true');
-      localStorage.setItem('campus_token', res.token);
-      setUser(res.user);
-      setIsGuest(false);
-
-      if (res.user.role === 'Admin') {
-        setCurrentTab('admin');
-        setNotifications([]);
-      } else {
-        const hasOrgRole = res.user.presidentClubs?.length > 0 || 
-          res.user.clubMemberships?.some(m => m.role === 'President' || m.role === 'Organizer');
-        
-        if (hasOrgRole) {
-          setCurrentTab('organizer');
-        } else {
-          setCurrentTab('events');
-        }
-
-        const notifRes = await api.getNotifications();
-        setNotifications(notifRes.notifications || []);
-      }
-    } catch (err) {
-      alert(`Could not sign in as ${email}: ${err.message}`);
-    }
-  };
 
   const handleLogout = () => {
     localStorage.removeItem('campus_token');
@@ -170,7 +142,6 @@ export default function App() {
         setCurrentTab={setCurrentTab}
         user={user}
         onLogout={handleLogout}
-        onQuickLogin={handleQuickLogin}
         notifications={notifications}
         onOpenNotifications={() => setShowNotifications(true)}
         onOpenAuth={() => setShowAuthModal(true)}

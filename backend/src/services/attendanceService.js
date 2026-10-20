@@ -8,6 +8,10 @@ class AttendanceService {
   async getAttendees(eventId) {
     return attendanceRepository.getEventAttendees(eventId);
   }
+
+  async unmarkAttendance(eventId, studentId) {
+    return attendanceRepository.unmarkAttendance(eventId, studentId);
+  }
 }
 
 module.exports = new AttendanceService();

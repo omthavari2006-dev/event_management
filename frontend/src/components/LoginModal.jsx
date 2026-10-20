@@ -55,21 +55,6 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
     }
   };
 
-  const handleQuickSelect = async (demoEmail) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await api.login(demoEmail, 'password123');
-      localStorage.setItem('campus_token', res.token);
-      onLoginSuccess(res.user);
-      onClose();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 460, padding: 32 }}>
@@ -196,32 +181,6 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }) {
           </button>
         </div>
 
-        {/* Viva Quick Login Helpers */}
-        <div style={{
-          marginTop: 24,
-          paddingTop: 16,
-          borderTop: '1px solid rgba(226, 232, 240, 0.9)'
-        }}>
-          <div style={{ fontSize: '0.74rem', textTransform: 'uppercase', color: '#64748b', fontWeight: 700, marginBottom: 8, letterSpacing: '0.04em' }}>
-            Quick 1-Click Login for Faculty / Viva:
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            <button 
-              className="btn btn-secondary" 
-              style={{ fontSize: '0.78rem', padding: '8px' }}
-              onClick={() => handleQuickSelect('admin@gmail.com')}
-            >
-              👑 Admin (Dr. Sharma)
-            </button>
-            <button 
-              className="btn btn-secondary" 
-              style={{ fontSize: '0.78rem', padding: '8px' }}
-              onClick={() => handleQuickSelect('alex@gmail.com')}
-            >
-              🎓 Student (Alex Rivera)
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );

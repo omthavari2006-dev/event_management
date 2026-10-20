@@ -10,8 +10,8 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
   const [isRegistering, setIsRegistering] = useState(false);
 
   // Form fields
-  const [email, setEmail] = useState('alex@gmail.com');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [department, setDepartment] = useState('Computer Science');
@@ -38,41 +38,10 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
       .catch(() => {});
   }, []);
 
-  // Quick preset accounts per role
-  const rolePresets = {
-    Student: [
-      { name: 'Alex Rivera', email: 'alex@gmail.com', dept: 'Computer Science (Year 3)', badge: '120 Points' },
-      { name: 'Sarah Jenkins', email: 'sarah@gmail.com', dept: 'Information Tech (Year 2)', badge: '60 Points' }
-    ],
-    Organizer: [
-      { name: 'Alex Rivera (President)', email: 'alex@gmail.com', club: 'CodeCraft Developers Club', badge: 'Tech & Hackathons' },
-      { name: 'Marcus Chen (President)', email: 'marcus@gmail.com', club: 'Robotics & Automation Society', badge: 'Drones & Hardware' }
-    ],
-    Admin: [
-      { name: 'Dr. Sharma (Dean)', email: 'admin@gmail.com', dept: 'Dean of Student Affairs', badge: 'Full Campus Authority' }
-    ]
-  };
-
   const handleSelectRole = (role) => {
     setSelectedRole(role);
     setIsRegistering(false);
     setError(null);
-    if (role === 'Admin') {
-      setEmail('admin@gmail.com');
-      setPassword('password123');
-    } else if (role === 'Organizer') {
-      setEmail('alex@gmail.com');
-      setPassword('password123');
-    } else {
-      setEmail('alex@gmail.com');
-      setPassword('password123');
-    }
-  };
-
-  const handleQuickPreset = (presetEmail) => {
-    setEmail(presetEmail);
-    setPassword('password123');
-    handleLoginDirect(presetEmail, 'password123');
   };
 
   const handleLoginDirect = async (userEmail, userPassword) => {
@@ -417,63 +386,6 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
           </div>
         </div>
 
-        {/* Quick 1-Click Demo Buttons for Viva Presentation */}
-        <div style={{
-          background: 'rgba(241, 245, 249, 0.75)',
-          border: '1.5px solid rgba(226, 232, 240, 0.9)',
-          borderRadius: 16,
-          padding: 16,
-          marginBottom: 24,
-          boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.02)'
-        }}>
-          <div style={{ fontSize: '0.76rem', textTransform: 'uppercase', color: '#4f46e5', fontWeight: 800, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6, letterSpacing: '0.04em' }}>
-            <Sparkles size={14} /> Instant 1-Click Demo Access for {selectedRole}:
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {rolePresets[selectedRole]?.map((preset, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => handleQuickPreset(preset.email)}
-                disabled={loading}
-                style={{
-                  padding: '11px 16px',
-                  borderRadius: 12,
-                  background: 'rgba(255, 255, 255, 0.92)',
-                  border: '1px solid rgba(226, 232, 240, 0.9)',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'all 0.15s ease',
-                  boxShadow: '0 2px 6px rgba(100, 116, 139, 0.05)'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#ffffff';
-                  e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.5)';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                  e.currentTarget.style.boxShadow = '0 6px 14px rgba(99, 102, 241, 0.12)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.92)';
-                  e.currentTarget.style.borderColor = 'rgba(226, 232, 240, 0.9)';
-                  e.currentTarget.style.transform = 'none';
-                  e.currentTarget.style.boxShadow = '0 2px 6px rgba(100, 116, 139, 0.05)';
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: '0.92rem', fontWeight: 700, color: '#0f172a' }}>{preset.name}</div>
-                  <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{preset.dept || preset.club}</div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span className="badge badge-purple" style={{ fontSize: '0.72rem' }}>{preset.badge}</span>
-                  <span style={{ fontSize: '0.82rem', color: '#2563eb', fontWeight: 700 }}>Enter &rarr;</span>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
 
         {error && (
           <div style={{
@@ -679,13 +591,8 @@ export default function RoleLoginPage({ onLoginSuccess, onExploreGuest }) {
             onClick={() => {
               setIsRegistering(!isRegistering);
               setError(null);
-              if (!isRegistering) {
-                setEmail('');
-                setPassword('');
-              } else {
-                setEmail(selectedRole === 'Admin' ? 'admin@gmail.com' : 'alex@gmail.com');
-                setPassword('password123');
-              }
+              setEmail('');
+              setPassword('');
             }}
             style={{ background: 'transparent', color: '#4f46e5', fontWeight: 700, cursor: 'pointer', border: 'none' }}
           >

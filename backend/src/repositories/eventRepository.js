@@ -43,7 +43,8 @@ class EventRepository {
       OPTIONAL MATCH (regStudent:Student)-[r:REGISTERED_FOR {status: 'Registered'}]->(e)
       OPTIONAL MATCH (waitStudent:Student)-[w:REGISTERED_FOR {status: 'Waitlisted'}]->(e)
       OPTIONAL MATCH (attStudent:Student)-[:ATTENDED]->(e)
-      WITH e, c, 
+      OPTIONAL MATCH (pres:Student)-[:PRESIDENT_OF]->(c)
+      WITH e, c, pres,
            count(DISTINCT regStudent) AS registeredCount,
            count(DISTINCT waitStudent) AS waitlistedCount,
            count(DISTINCT attStudent) AS attendedCount
@@ -63,11 +64,13 @@ class EventRepository {
              e.createdTimestamp AS createdTimestamp,
              c.clubId AS clubId,
              c.name AS clubName,
+             c.facultyAdvisor AS facultyAdvisor,
+             pres.name AS presidentName,
              registeredCount,
              waitlistedCount,
              attendedCount,
              (e.maxParticipants - registeredCount) AS seatsLeft
-      ORDER BY e.startDateTime ASC
+      ORDER BY CASE WHEN $status = 'Completed' THEN e.startDateTime END DESC, e.startDateTime ASC
       SKIP toInteger($skip)
       LIMIT toInteger($limit)
     `;
@@ -88,6 +91,7 @@ class EventRepository {
     const cypher = `
       MATCH (e:Event {eventId: $eventId})
       OPTIONAL MATCH (c:Club)-[:ORGANIZES]->(e)
+      OPTIONAL MATCH (pres:Student)-[:PRESIDENT_OF]->(c)
       OPTIONAL MATCH (regStudent:Student)-[r:REGISTERED_FOR {status: 'Registered'}]->(e)
       OPTIONAL MATCH (waitStudent:Student)-[w:REGISTERED_FOR {status: 'Waitlisted'}]->(e)
       OPTIONAL MATCH (attStudent:Student)-[:ATTENDED]->(e)
@@ -98,7 +102,7 @@ class EventRepository {
       OPTIONAL MATCH (curStudent)-[curFb:GAVE_FEEDBACK]->(e)
       OPTIONAL MATCH (curStudent)-[:IN_TEAM]->(curTeam:Team)-[:FOR_EVENT]->(e)
       
-      WITH e, c,
+      WITH e, c, pres,
            count(DISTINCT regStudent) AS registeredCount,
            count(DISTINCT waitStudent) AS waitlistedCount,
            count(DISTINCT attStudent) AS attendedCount,
@@ -124,6 +128,8 @@ class EventRepository {
              e.createdTimestamp AS createdTimestamp,
              c.clubId AS clubId,
              c.name AS clubName,
+             c.facultyAdvisor AS facultyAdvisor,
+             pres.name AS presidentName,
              registeredCount,
              waitlistedCount,
              attendedCount,

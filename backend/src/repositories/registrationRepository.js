@@ -38,23 +38,35 @@ class RegistrationRepository {
       // 1. Fetch and Lock Event node (prevents concurrent overbooking)
       const lockQuery = `
         MATCH (e:Event {eventId: $eventId})
-        WHERE e.status = 'Approved'
         SET e._lock = timestamp()
         RETURN e.eventId AS eventId,
                e.name AS name,
+               e.status AS status,
                e.maxParticipants AS maxParticipants,
-               e.registrationDeadline AS deadline
+               e.startDateTime AS startDateTime,
+               coalesce(e.registrationDeadline, e.startDateTime) AS deadline
       `;
       const lockRes = await tx.run(lockQuery, { eventId });
       const events = recordsToObjects(lockRes.records);
 
       if (events.length === 0) {
-        throw new Error('Event not found or not in Approved status');
+        throw new Error('Event not found.');
       }
 
       const event = events[0];
-      if (new Date(event.deadline) < new Date()) {
-        throw new Error('Registration deadline has passed for this event');
+      if (event.status === 'Pending') {
+        throw new Error('This event is pending Admin approval. Registrations will open once approved.');
+      }
+      if (event.status !== 'Approved') {
+        throw new Error(`Registration closed: Event status is ${event.status}.`);
+      }
+
+      const now = new Date();
+      if (event.deadline && new Date(event.deadline) < now) {
+        throw new Error('Registration closed: The registration deadline has passed.');
+      }
+      if (event.startDateTime && new Date(event.startDateTime) < now) {
+        throw new Error('Registration closed: The event has already started.');
       }
 
       // 2. Count current registered students

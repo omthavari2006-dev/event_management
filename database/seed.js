@@ -132,12 +132,8 @@ async function seed() {
     // 4. Verification
     await verifyCounts(session);
 
-    console.log('\n✨ Database seeding finished successfully!');
-    console.log('Default credentials for testing:');
-    console.log('  👑 Admin:     admin@gmail.com     / password123');
-    console.log('  🎓 Student:   alex@gmail.com      / password123 (President of CodeCraft)');
-    console.log('  🎓 Student:   marcus@gmail.com    / password123 (President of Robotics)');
-    console.log('  🎓 Student:   sarah@gmail.com     / password123 (Student Member)');
+    console.log('\n✨ Database baseline seeding finished successfully!');
+    console.log('Clubs are ready. Create and sign in with your own Admin, Organizer, or Student accounts via the portal.');
   } catch (error) {
     console.error('\n❌ Seeding failed:', error.message);
     if (error.code === 'ServiceUnavailable') {

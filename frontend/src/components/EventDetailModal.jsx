@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   X, Calendar, MapPin, Users, Clock, AlertTriangle, 
-  CheckCircle, ShieldAlert, Star, MessageSquare, Plus, UserPlus, FileText 
+  CheckCircle, ShieldAlert, Star, MessageSquare, Plus, UserPlus, FileText, Lock 
 } from 'lucide-react';
 import { api } from '../api/client';
 import confetti from 'canvas-confetti';
@@ -285,19 +285,28 @@ export default function EventDetailModal({
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <Calendar size={18} color="#0284c7" />
                   <div>
-                    <div style={{ fontSize: '0.74rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Date & Time</div>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0f172a' }}>
-                      {new Date(event.startDateTime).toLocaleDateString()} at {new Date(event.startDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    <div style={{ fontSize: '0.74rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Event Schedule</div>
+                    <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#0f172a' }}>
+                      {new Date(event.startDateTime).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: '#475569' }}>
+                      {new Date(event.startDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {event.endDateTime ? ` – ${new Date(event.endDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}
                     </div>
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <Clock size={18} color="#d97706" />
+                  <Clock size={18} color={new Date(event.registrationDeadline || event.startDateTime) < new Date() ? '#dc2626' : '#d97706'} />
                   <div>
-                    <div style={{ fontSize: '0.74rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Deadline</div>
-                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0f172a' }}>
-                      {new Date(event.registrationDeadline).toLocaleDateString()}
+                    <div style={{ fontSize: '0.74rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>Registration Deadline</div>
+                    <div style={{ fontSize: '0.88rem', fontWeight: 700, color: new Date(event.registrationDeadline || event.startDateTime) < new Date() ? '#b91c1c' : '#0f172a' }}>
+                      {new Date(event.registrationDeadline || event.startDateTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: new Date(event.registrationDeadline || event.startDateTime) < new Date() ? '#dc2626' : '#64748b', fontWeight: new Date(event.registrationDeadline || event.startDateTime) < new Date() ? 700 : 400 }}>
+                      {new Date(event.registrationDeadline || event.startDateTime) < new Date() 
+                        ? '⛔ Expired / Closed' 
+                        : `Closes at ${new Date(event.registrationDeadline || event.startDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
                     </div>
                   </div>
                 </div>
@@ -387,74 +396,125 @@ export default function EventDetailModal({
                 gap: 16,
                 boxShadow: '0 4px 14px rgba(100, 116, 139, 0.04)'
               }}>
-                {event.status === 'Pending' ? (
-                  <div style={{
-                    width: '100%',
-                    padding: '14px 18px',
-                    borderRadius: 10,
-                    background: 'rgba(245, 158, 11, 0.15)',
-                    border: '1px solid rgba(245, 158, 11, 0.3)',
-                    color: '#fcd34d',
-                    fontSize: '0.88rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12
-                  }}>
-                    <Clock size={20} color="#f59e0b" style={{ flexShrink: 0 }} />
-                    <div>
-                      <strong>Pending Admin Approval:</strong> This event was issued by <strong>{event.clubName}</strong> and is currently awaiting approval from Campus Administration. Registrations will open immediately once approved!
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div>
-                      <div style={{ fontSize: '0.82rem', color: '#94a3b8' }}>Registration Status</div>
-                      <div style={{ fontSize: '1.1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                        {event.userRegistrationStatus ? (
-                          <span className={`badge ${event.userRegistrationStatus === 'Registered' ? 'badge-success' : 'badge-warning'}`} style={{ fontSize: '0.9rem', padding: '6px 14px' }}>
-                            {event.userRegistrationStatus === 'Registered' ? 'Confirmed Participant' : 'Waitlisted (Position #1)'}
-                          </span>
-                        ) : (
-                          <span>{event.seatsLeft > 0 ? `${event.seatsLeft} Seats Available` : 'Event Full (Waitlist Open)'}</span>
+                {(() => {
+                  const now = new Date();
+                  const deadlineDate = event.registrationDeadline ? new Date(event.registrationDeadline) : (event.startDateTime ? new Date(event.startDateTime) : null);
+                  const startDate = event.startDateTime ? new Date(event.startDateTime) : null;
+                  const isDeadlinePassed = (deadlineDate && deadlineDate < now) || (startDate && startDate < now);
+                  const isRegistrationClosed = event.status === 'Completed' || event.status === 'Cancelled' || isDeadlinePassed;
+
+                  if (event.status === 'Pending') {
+                    return (
+                      <div style={{
+                        width: '100%',
+                        padding: '14px 18px',
+                        borderRadius: 12,
+                        background: 'rgba(245, 158, 11, 0.12)',
+                        border: '1.5px solid rgba(245, 158, 11, 0.35)',
+                        color: '#92400e',
+                        fontSize: '0.88rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 12
+                      }}>
+                        <Clock size={20} color="#d97706" style={{ flexShrink: 0 }} />
+                        <div>
+                          <strong>Pending Admin Approval:</strong> This event was issued by <strong>{event.clubName}</strong> and is currently awaiting approval from Campus Administration. Registrations will open immediately once approved!
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <>
+                      <div>
+                        <div style={{ fontSize: '0.82rem', color: '#64748b', fontWeight: 600 }}>Registration Status</div>
+                        <div style={{ fontSize: '1.1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                          {event.userRegistrationStatus ? (
+                            <span className={`badge ${event.userRegistrationStatus === 'Registered' ? 'badge-success' : 'badge-warning'}`} style={{ fontSize: '0.9rem', padding: '6px 14px' }}>
+                              {event.userRegistrationStatus === 'Registered' ? 'Confirmed Participant' : 'Waitlisted (Position #1)'}
+                            </span>
+                          ) : isRegistrationClosed ? (
+                            <span className="badge" style={{
+                              background: 'rgba(239, 68, 68, 0.12)',
+                              color: '#b91c1c',
+                              border: '1.5px solid rgba(239, 68, 68, 0.35)',
+                              fontSize: '0.9rem',
+                              padding: '6px 14px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 6
+                            }}>
+                              <Lock size={14} /> Registration Closed
+                            </span>
+                          ) : (
+                            <span>{event.seatsLeft > 0 ? `${event.seatsLeft} Seats Available` : 'Event Full (Waitlist Open)'}</span>
+                          )}
+                        </div>
+                        {isRegistrationClosed && !event.userRegistrationStatus && (
+                          <div style={{ fontSize: '0.8rem', color: '#b91c1c', marginTop: 4, fontWeight: 500 }}>
+                            {event.status === 'Completed' ? 'This event is concluded.' : 'The deadline to register for this event has expired.'}
+                          </div>
                         )}
                       </div>
-                    </div>
 
-                    <div style={{ display: 'flex', gap: 12 }}>
-                      {event.userRegistrationStatus ? (
-                        <>
-                          {event.userRegistrationStatus === 'Registered' && (
-                            <button 
-                              className="btn btn-secondary"
-                              onClick={() => {
-                                onClose();
-                                if (onViewTicket) onViewTicket(event);
-                              }}
-                            >
-                              View Pass & QR
-                            </button>
-                          )}
+                      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                        {event.userRegistrationStatus ? (
+                          <>
+                            {event.userRegistrationStatus === 'Registered' && (
+                              <button 
+                                className="btn btn-secondary"
+                                onClick={() => {
+                                  onClose();
+                                  if (onViewTicket) onViewTicket(event);
+                                }}
+                              >
+                                View Pass & QR
+                              </button>
+                            )}
+                            {event.status !== 'Completed' && (
+                              <button 
+                                className="btn btn-outline-danger"
+                                onClick={handleCancelRegistration}
+                                disabled={actionLoading}
+                              >
+                                Cancel Registration
+                              </button>
+                            )}
+                          </>
+                        ) : isRegistrationClosed ? (
                           <button 
-                            className="btn btn-outline-danger"
-                            onClick={handleCancelRegistration}
-                            disabled={actionLoading}
+                            className="btn btn-secondary"
+                            disabled={true}
+                            style={{
+                              padding: '12px 22px',
+                              fontSize: '0.95rem',
+                              opacity: 0.65,
+                              cursor: 'not-allowed',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 8,
+                              background: '#f1f5f9',
+                              color: '#64748b',
+                              border: '1.5px solid #cbd5e1'
+                            }}
                           >
-                            Cancel Registration
+                            <Lock size={16} /> Registration Closed
                           </button>
-                        </>
-                      ) : (
-                        <button 
-                          className="btn btn-primary"
-                          onClick={handleRegister}
-                          disabled={actionLoading || event.status !== 'Approved'}
-                          style={{ padding: '12px 24px', fontSize: '1rem' }}
-                        >
-                          {actionLoading ? 'Processing...' : event.seatsLeft > 0 ? 'Register for Event' : 'Join Waitlist'}
-                        </button>
-                      )}
-                    </div>
-                  </>
-                )}
+                        ) : (
+                          <button 
+                            className="btn btn-primary"
+                            onClick={handleRegister}
+                            disabled={actionLoading || event.status !== 'Approved'}
+                            style={{ padding: '12px 24px', fontSize: '1rem' }}
+                          >
+                            {actionLoading ? 'Processing...' : event.seatsLeft > 0 ? 'Register for Event' : 'Join Waitlist'}
+                          </button>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
 
               {/* Teams Section (If maxTeamSize > 0) */}

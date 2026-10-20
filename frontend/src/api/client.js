@@ -73,6 +73,7 @@ export const api = {
 
   // Attendance & Winners
   markAttendance: (eventId, studentIds) => request(`/attendance/event/${eventId}`, { method: 'POST', body: JSON.stringify({ studentIds }) }),
+  unmarkAttendance: (eventId, studentId) => request(`/attendance/event/${eventId}/student/${studentId}`, { method: 'DELETE' }),
   getAttendees: (eventId) => request(`/attendance/event/${eventId}`),
   declareWinners: (eventId, winners) => request(`/winners/event/${eventId}`, { method: 'POST', body: JSON.stringify({ winners }) }),
   getWinners: (eventId) => request(`/winners/event/${eventId}`),

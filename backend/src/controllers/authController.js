@@ -60,7 +60,7 @@ const login = asyncHandler(async (req, res) => {
   if (!GMAIL_REGEX.test(cleanEmail)) {
     return res.status(400).json({
       success: false,
-      message: 'Email must be a valid @gmail.com address (e.g., alex@gmail.com).'
+      message: 'Email must be a valid @gmail.com address (e.g., student@gmail.com).'
     });
   }
 

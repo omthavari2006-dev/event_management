@@ -35,6 +35,15 @@ class AttendanceRepository {
     const result = await executeQuery(cypher, { eventId });
     return recordsToObjects(result.records);
   }
+  async unmarkAttendance(eventId, studentId) {
+    const cypher = `
+      MATCH (s:Student {studentId: $studentId})-[att:ATTENDED]->(e:Event {eventId: $eventId})
+      DELETE att
+      RETURN s.studentId AS studentId
+    `;
+    const result = await executeQuery(cypher, { eventId, studentId });
+    return recordsToObjects(result.records);
+  }
 }
 
 module.exports = new AttendanceRepository();

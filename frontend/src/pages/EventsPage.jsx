@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Search, Calendar, MapPin, Users, Sparkles, Filter, 
-  ArrowRight, ShieldCheck, Flame, Compass, CheckCircle 
+  ArrowRight, ShieldCheck, Flame, Compass, CheckCircle,
+  Clock, Lock
 } from 'lucide-react';
 import { api } from '../api/client';
 
@@ -249,6 +250,11 @@ export default function EventsPage({ user, onSelectEvent, onOpenAuth }) {
           {events.map((evt) => {
             const seatsPercent = Math.min(100, Math.round((evt.registeredCount / (evt.maxParticipants || 1)) * 100));
             const isFull = evt.seatsLeft <= 0;
+            const now = new Date();
+            const deadlineDate = evt.registrationDeadline ? new Date(evt.registrationDeadline) : (evt.startDateTime ? new Date(evt.startDateTime) : null);
+            const startDate = evt.startDateTime ? new Date(evt.startDateTime) : null;
+            const isDeadlinePassed = (deadlineDate && deadlineDate < now) || (startDate && startDate < now);
+            const isRegistrationClosed = evt.status === 'Completed' || evt.status === 'Cancelled' || isDeadlinePassed;
 
             return (
               <div 
@@ -264,13 +270,32 @@ export default function EventsPage({ user, onSelectEvent, onOpenAuth }) {
               >
                 {/* Event Card Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                  <div style={{ display: 'flex', gap: 6 }}>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     <span className="badge badge-info">{evt.type}</span>
                     <span className="badge badge-purple">{evt.clubName}</span>
                   </div>
-                  <span className={`badge ${evt.status === 'Approved' ? 'badge-success' : evt.status === 'Completed' ? 'badge-purple' : 'badge-warning'}`}>
-                    {evt.status}
-                  </span>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    {isRegistrationClosed ? (
+                      <span className="badge" style={{
+                        background: 'rgba(239, 68, 68, 0.12)',
+                        color: '#b91c1c',
+                        border: '1.5px solid rgba(239, 68, 68, 0.35)',
+                        fontWeight: 700,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4
+                      }}>
+                        <Lock size={12} /> Registration Closed
+                      </span>
+                    ) : (
+                      <span className="badge badge-success" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        <CheckCircle size={12} /> Registration Open
+                      </span>
+                    )}
+                    <span className={`badge ${evt.status === 'Approved' ? 'badge-success' : evt.status === 'Completed' ? 'badge-purple' : 'badge-warning'}`}>
+                      {evt.status}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Event Title & Description */}
@@ -308,16 +333,23 @@ export default function EventsPage({ user, onSelectEvent, onOpenAuth }) {
                   </div>
                 )}
 
-                {/* Event Venue & Date */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: '0.84rem', color: '#334155', marginBottom: 18 }}>
+                {/* Event Venue, Event Date & Registration Deadline */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 9, fontSize: '0.84rem', color: '#334155', marginBottom: 18, background: 'rgba(241, 245, 249, 0.65)', padding: '10px 14px', borderRadius: 12, border: '1px solid rgba(226, 232, 240, 0.9)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <MapPin size={15} color="#4f46e5" />
-                    <span style={{ fontWeight: 500 }}>{evt.venue}</span>
+                    <MapPin size={15} color="#4f46e5" style={{ flexShrink: 0 }} />
+                    <span style={{ fontWeight: 600, color: '#0f172a' }}>{evt.venue}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Calendar size={15} color="#0284c7" />
+                    <Calendar size={15} color="#0284c7" style={{ flexShrink: 0 }} />
                     <span>
-                      {new Date(evt.startDateTime).toLocaleDateString()} at {new Date(evt.startDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      <strong>Event Date:</strong> {startDate ? `${startDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })} at ${startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'TBA'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Clock size={15} color={isDeadlinePassed ? '#dc2626' : '#d97706'} style={{ flexShrink: 0 }} />
+                    <span style={{ color: isDeadlinePassed ? '#b91c1c' : '#334155' }}>
+                      <strong>Reg Deadline:</strong> {deadlineDate ? `${deadlineDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} at ${deadlineDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'At event start'}
+                      {isDeadlinePassed && <span style={{ marginLeft: 6, fontWeight: 700, color: '#dc2626' }}>(Closed)</span>}
                     </span>
                   </div>
                 </div>
@@ -328,16 +360,22 @@ export default function EventsPage({ user, onSelectEvent, onOpenAuth }) {
                     <span style={{ color: '#64748b', fontWeight: 500 }}>
                       {evt.registeredCount} / {evt.maxParticipants} Registered
                     </span>
-                    <span style={{ fontWeight: 700, color: isFull ? '#d97706' : '#059669' }}>
-                      {isFull ? 'Waitlist Open' : `${evt.seatsLeft} Seats Left`}
-                    </span>
+                    {isRegistrationClosed ? (
+                      <span style={{ fontWeight: 700, color: '#dc2626', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <Lock size={12} /> Registration Closed
+                      </span>
+                    ) : (
+                      <span style={{ fontWeight: 700, color: isFull ? '#d97706' : '#059669' }}>
+                        {isFull ? 'Waitlist Open' : `${evt.seatsLeft} Seats Left`}
+                      </span>
+                    )}
                   </div>
 
                   <div style={{ width: '100%', height: 7, borderRadius: 4, background: 'rgba(226, 232, 240, 0.9)', overflow: 'hidden' }}>
                     <div style={{
                       width: `${seatsPercent}%`,
                       height: '100%',
-                      background: isFull ? '#f59e0b' : 'linear-gradient(90deg, #10b981, #06b6d4)',
+                      background: isRegistrationClosed ? 'rgba(148, 163, 184, 0.7)' : isFull ? '#f59e0b' : 'linear-gradient(90deg, #10b981, #06b6d4)',
                       transition: 'width 0.3s ease'
                     }} />
                   </div>

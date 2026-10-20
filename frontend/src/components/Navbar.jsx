@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   Calendar, Award, CheckCircle, Shield, Users, Bell, 
-  Sparkles, LogOut, Network, Search, Ticket, ChevronDown, ArrowLeftRight 
+  Sparkles, LogOut, Network, Search, Ticket, ArrowLeftRight 
 } from 'lucide-react';
 
 export default function Navbar({ 
@@ -9,20 +9,11 @@ export default function Navbar({
   setCurrentTab, 
   user, 
   onLogout, 
-  onQuickLogin, 
   notifications = [], 
   onOpenNotifications,
   onOpenAuth
 }) {
-  const [showRoleMenu, setShowRoleMenu] = useState(false);
   const unreadCount = notifications.filter(n => n.status === 'Unread').length;
-
-  const demoAccounts = [
-    { label: 'Alex Rivera (President, CodeCraft)', email: 'alex@gmail.com', role: 'Student' },
-    { label: 'Dr. Sharma (Admin / Dean)', email: 'admin@gmail.com', role: 'Admin' },
-    { label: 'Marcus Chen (President, Robotics)', email: 'marcus@gmail.com', role: 'Student' },
-    { label: 'Sarah Jenkins (General Student)', email: 'sarah@gmail.com', role: 'Student' }
-  ];
 
   return (
     <header style={{
@@ -141,77 +132,8 @@ export default function Navbar({
           </button>
         </nav>
 
-        {/* User / Auth Controls & Quick Persona Switcher */}
+        {/* User / Auth Controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {/* Demo Quick Switcher Dropdown */}
-          <div style={{ position: 'relative' }}>
-            <button 
-              onClick={() => setShowRoleMenu(!showRoleMenu)}
-              className="btn btn-secondary"
-              style={{ padding: '8px 14px', fontSize: '0.82rem', borderColor: 'rgba(99, 102, 241, 0.4)', background: 'rgba(99, 102, 241, 0.08)' }}
-              title="Switch demo persona for Viva presentation"
-            >
-              <span style={{ color: '#4f46e5', fontWeight: 700 }}>Demo Persona</span>
-              <ChevronDown size={14} color="#4f46e5" />
-            </button>
-
-            {showRoleMenu && (
-              <div style={{
-                position: 'absolute',
-                right: 0,
-                top: 46,
-                width: 290,
-                background: 'rgba(255, 255, 255, 0.96)',
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-                border: '1px solid rgba(203, 213, 225, 0.9)',
-                borderRadius: 14,
-                boxShadow: '0 20px 45px rgba(15, 23, 42, 0.15), inset 0 1px 1px rgba(255, 255, 255, 1)',
-                padding: 10,
-                zIndex: 200
-              }}>
-                <div style={{ padding: '6px 10px', fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.04em' }}>
-                  Select Demo Persona:
-                </div>
-                {demoAccounts.map((acc, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => {
-                      onQuickLogin(acc.email, 'password123');
-                      setShowRoleMenu(false);
-                    }}
-                    style={{
-                      padding: '9px 12px',
-                      borderRadius: 10,
-                      cursor: 'pointer',
-                      fontSize: '0.84rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      transition: 'all 0.15s ease',
-                      marginBottom: 4
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(99, 102, 241, 0.08)';
-                      e.currentTarget.style.transform = 'translateX(2px)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'transparent';
-                      e.currentTarget.style.transform = 'none';
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontWeight: 700, color: '#0f172a' }}>{acc.label}</div>
-                      <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{acc.email}</div>
-                    </div>
-                    <span className={`badge ${acc.role === 'Admin' ? 'badge-danger' : 'badge-info'}`} style={{ fontSize: '0.68rem' }}>
-                      {acc.role}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
 
           {/* Notifications Button */}
           {user && (

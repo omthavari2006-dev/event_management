@@ -202,6 +202,18 @@ export default function OrganizerPage({ user, onRefresh }) {
     }
   };
 
+  const handleUnmarkAttendance = async (studentId) => {
+    if (!studentId) return;
+    try {
+      await api.unmarkAttendance(selectedEventId, studentId);
+      setStatusMessage({ type: 'info', text: `Attendance unmarked for student ${studentId}.` });
+      const res = await api.getEventRegistrations(selectedEventId);
+      setRegistrations(res.registrations || []);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   const handleQuickCheckInSubmit = (e) => {
     e.preventDefault();
     if (!quickStudentId.trim()) return;
@@ -654,23 +666,145 @@ export default function OrganizerPage({ user, onRefresh }) {
                 paddingBottom: 22,
                 marginBottom: 24
               }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                    <h2 style={{ fontSize: '1.6rem', color: '#0f172a', fontWeight: 800 }}>{selectedEvent.name}</h2>
-                    <span className={`badge ${selectedEvent.status === 'Approved' ? 'badge-success' : 'badge-purple'}`}>
-                      {selectedEvent.status === 'Approved' ? '🟢 Live & Open for Registrations' : '🏁 Completed Event'}
+                <div style={{ flex: 1, minWidth: 320 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
+                    <h2 style={{ fontSize: '1.65rem', color: '#0f172a', fontWeight: 800 }}>{selectedEvent.name}</h2>
+                    <span className={`badge ${selectedEvent.status === 'Approved' ? 'badge-success' : selectedEvent.status === 'Completed' ? 'badge-purple' : 'badge-warning'}`}>
+                      {selectedEvent.status === 'Approved' ? '🟢 Live & Open' : selectedEvent.status === 'Completed' ? '🏁 Completed' : selectedEvent.status}
                     </span>
                     <span className="badge badge-info">{selectedEvent.type}</span>
+                    <span className="badge badge-purple">{selectedEvent.clubName}</span>
                   </div>
 
-                  <div style={{ fontSize: '0.88rem', color: '#64748b', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-                    <span>📍 Venue: <strong style={{ color: '#0f172a' }}>{selectedEvent.venue}</strong></span>
-                    <span>📅 Date: <strong style={{ color: '#0f172a' }}>{new Date(selectedEvent.startDateTime).toLocaleDateString()}</strong></span>
-                    <span>👥 Capacity: <strong style={{ color: '#0f172a' }}>{selectedEvent.maxParticipants} Seats</strong> ({selectedEvent.maxTeamSize > 0 ? `Team of ${selectedEvent.maxTeamSize}` : 'Solo'})</span>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: 10,
+                    fontSize: '0.86rem',
+                    color: '#334155',
+                    background: 'rgba(241, 245, 249, 0.7)',
+                    padding: '12px 16px',
+                    borderRadius: 12,
+                    border: '1px solid rgba(226, 232, 240, 0.9)',
+                    marginBottom: 12
+                  }}>
+                    <div>
+                      📍 <strong>Venue:</strong> {selectedEvent.venue}
+                    </div>
+                    <div>
+                      📅 <strong>Event Starts:</strong> {new Date(selectedEvent.startDateTime).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })} at {new Date(selectedEvent.startDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                    <div>
+                      🏁 <strong>Event Ends:</strong> {selectedEvent.endDateTime ? `${new Date(selectedEvent.endDateTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} at ${new Date(selectedEvent.endDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'TBA'}
+                    </div>
+                    <div>
+                      ⏰ <strong>Reg Deadline:</strong> {new Date(selectedEvent.registrationDeadline || selectedEvent.startDateTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} at {new Date(selectedEvent.registrationDeadline || selectedEvent.startDateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
                   </div>
+
+                  {/* Timing & Manual Attendance Status Banner */}
+                  {(() => {
+                    const now = new Date();
+                    const eventStart = new Date(selectedEvent.startDateTime);
+                    const eventEnd = selectedEvent.endDateTime ? new Date(selectedEvent.endDateTime) : null;
+                    const isStarted = now >= eventStart;
+                    const isEnded = selectedEvent.status === 'Completed' || (eventEnd && now >= eventEnd);
+
+                    if (selectedEvent.status === 'Completed') {
+                      return (
+                        <div style={{
+                          padding: '10px 14px',
+                          borderRadius: 10,
+                          background: 'rgba(147, 51, 234, 0.1)',
+                          border: '1.5px solid rgba(147, 51, 234, 0.3)',
+                          color: '#6b21a8',
+                          fontSize: '0.86rem',
+                          fontWeight: 600,
+                          marginBottom: 12,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8
+                        }}>
+                          <CheckCircle size={17} color="#9333ea" />
+                          <span>Event Completed! Final attendance numbers and stats are recorded and synced to Campus Administration.</span>
+                        </div>
+                      );
+                    }
+
+                    if (selectedEvent.status === 'Approved' && !isStarted) {
+                      return (
+                        <div style={{
+                          padding: '10px 14px',
+                          borderRadius: 10,
+                          background: 'rgba(59, 130, 246, 0.1)',
+                          border: '1.5px solid rgba(59, 130, 246, 0.3)',
+                          color: '#1d4ed8',
+                          fontSize: '0.86rem',
+                          fontWeight: 600,
+                          marginBottom: 12,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8
+                        }}>
+                          <Clock size={17} color="#2563eb" />
+                          <span>
+                            Upcoming Event — Starts on <strong>{eventStart.toLocaleString()}</strong>. When the event starts, you can manually mention and mark attendees below (early check-in also permitted).
+                          </span>
+                        </div>
+                      );
+                    }
+
+                    if (selectedEvent.status === 'Approved' && isStarted && !isEnded) {
+                      return (
+                        <div style={{
+                          padding: '10px 14px',
+                          borderRadius: 10,
+                          background: 'rgba(16, 185, 129, 0.12)',
+                          border: '1.5px solid rgba(16, 185, 129, 0.35)',
+                          color: '#065f46',
+                          fontSize: '0.86rem',
+                          fontWeight: 700,
+                          marginBottom: 12,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8
+                        }}>
+                          <Sparkles size={17} color="#059669" />
+                          <span>
+                            🔴 Event In Progress! Event started at {eventStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}. Mention and mark attending students manually below.
+                          </span>
+                        </div>
+                      );
+                    }
+
+                    if (selectedEvent.status === 'Approved' && isEnded) {
+                      return (
+                        <div style={{
+                          padding: '10px 14px',
+                          borderRadius: 10,
+                          background: 'rgba(245, 158, 11, 0.12)',
+                          border: '1.5px solid rgba(245, 158, 11, 0.35)',
+                          color: '#b45309',
+                          fontSize: '0.86rem',
+                          fontWeight: 600,
+                          marginBottom: 12,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8
+                        }}>
+                          <CheckSquare size={17} color="#d97706" />
+                          <span>
+                            🏁 Event Schedule Concluded — Finalize manual attendance and declare any winners, then click <strong>"Complete Event"</strong> to submit the final records to Admin.
+                          </span>
+                        </div>
+                      );
+                    }
+
+                    return null;
+                  })()}
 
                   {selectedEvent.requirements && (
-                    <div style={{ marginTop: 12, fontSize: '0.84rem', color: '#4338ca', background: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.25)', padding: '7px 14px', borderRadius: 10, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ marginTop: 6, fontSize: '0.84rem', color: '#4338ca', background: 'rgba(99, 102, 241, 0.08)', border: '1px solid rgba(99, 102, 241, 0.25)', padding: '7px 14px', borderRadius: 10, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                       <FileText size={15} color="#4f46e5" />
                       <span><strong>Requirements:</strong> {selectedEvent.requirements}</span>
                     </div>
@@ -859,13 +993,33 @@ export default function OrganizerPage({ user, onRefresh }) {
                             {!r.attended && r.status === 'Registered' ? (
                               <button 
                                 className="btn btn-secondary"
-                                style={{ padding: '5px 12px', fontSize: '0.78rem', background: '#10b981', color: '#fff', border: 'none' }}
+                                style={{ padding: '6px 14px', fontSize: '0.8rem', background: '#10b981', color: '#fff', border: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}
                                 onClick={() => handleMarkAttendance(r.studentId)}
                               >
-                                <Check size={13} /> Check In
+                                <Check size={14} /> Mark Present
                               </button>
                             ) : r.attended ? (
-                              <span style={{ color: '#059669', fontSize: '0.82rem', fontWeight: 700 }}>Checked In ✓</span>
+                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                                <span style={{ color: '#059669', fontSize: '0.82rem', fontWeight: 700 }}>Present ✓</span>
+                                {selectedEvent.status !== 'Completed' && (
+                                  <button
+                                    onClick={() => handleUnmarkAttendance(r.studentId)}
+                                    style={{
+                                      background: 'rgba(239, 68, 68, 0.08)',
+                                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                                      color: '#dc2626',
+                                      borderRadius: 6,
+                                      padding: '3px 8px',
+                                      fontSize: '0.72rem',
+                                      cursor: 'pointer',
+                                      fontWeight: 600
+                                    }}
+                                    title="Unmark attendance (set Absent)"
+                                  >
+                                    Mark Absent
+                                  </button>
+                                )}
+                              </div>
                             ) : null}
                           </td>
                         </tr>

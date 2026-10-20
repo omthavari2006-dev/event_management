@@ -149,16 +149,12 @@ Frontend client will open at: **`http://localhost:5173`**
 
 ---
 
-## Demo Accounts (Password: `password123` for all)
-
-| Persona | Name | Email | Role / Privileges |
-| :--- | :--- | :--- | :--- |
-| **Admin** | Dr. Sharma | `admin@gmail.com` | Approve clubs & events, system analytics |
-| **Student (Organizer)** | Alex Rivera | `alex@gmail.com` | CodeCraft President, create events, mark attendance |
-| **Student (Organizer)** | Marcus Chen | `marcus@gmail.com` | Robotics President, create events, declare winners |
-| **Student (Member)** | Sarah Jenkins | `sarah@gmail.com` | Browse events, join waitlist, download passes |
-
-> **Viva Demo Tip**: Use the **"Demo Persona"** dropdown in the top-right navbar to instantly switch between Admin, President, and Student with zero typing!
+## User Accounts & Role-Based Access
+ 
+Users can register and sign in with their own `@gmail.com` accounts directly via the Role-Based Login Screen (`http://localhost:5173`):
+- **Admin**: Approve/reject clubs & events, monitor system-wide attendance, analytics, and completed event audits.
+- **Organizer**: Create events for approved clubs, issue approvals to Admin, manage registrations, track check-ins, and conclude events.
+- **Student**: Discover events, register within schedule windows, view passes, check-in, and download verifiable certificates.
 
 ---
 
